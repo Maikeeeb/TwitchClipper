@@ -8,7 +8,7 @@ update the referenced files directly.
 
 Expected command:
 ```bash
-gh repo create {{NEW_REPO_NAME}} <new-repo-name> --template {{TEMPLATE_REPO}} <owner/template-repo> --clone
+gh repo create TwitchClipper --template Not used --clone
 ```
 
 ## 1) Gather project profile (ask the user)
@@ -25,7 +25,7 @@ Capture these values before editing files:
 
 ## 2) Fill placeholders in core docs
 
-Replace all `{{...}}` placeholders in:
+Replace all placeholder tokens in:
 
 - @README.md
 - @AGENTS.md
@@ -43,83 +43,87 @@ Reference docs:
 
 Common placeholders you must resolve:
 
-- `{{PROJECT_NAME}}` <project display name>
-- `{{PRIMARY_LANGUAGE}}` <e.g., Python, TypeScript>
-- `{{PRIMARY_FRAMEWORK}}` <e.g., FastAPI, React, None>
-- `{{ENTRY_POINTS}}` <CLI/API/UI entry commands>
-- `{{CLI_ENTRY_POINT}}` <CLI entry command or module path>
-- `{{API_ENTRY_POINT}}` <API start command>
-- `{{FRONTEND_ENTRY_POINT}}` <frontend dev server command>
-- `{{TUTORIAL_ENTRY_POINT}}` <tutorial or examples command>
-- `{{CONFIG_PATHS}}` <config file paths>
-- `{{CONFIG_HELPER_PATHS}}` <config helper module paths>
-- `{{DATA_PATHS}}` <data folder paths>
-- `{{SCHEMA_PATHS}}` <schema file paths>
-- `{{BACKEND_ROOT}}` <backend root folder>
-- `{{BACKEND_CONFIG_PATHS}}` <backend config module paths>
-- `{{BACKEND_DOMAIN_PATHS}}` <domain logic module paths>
-- `{{BACKEND_API_PATHS}}` <backend API module paths>
-- `{{BACKEND_CLI_PATHS}}` <backend CLI module paths>
-- `{{BACKEND_PACKAGES}}` <backend packages for coverage targets>
-- `{{API_ROOT}}` <API root folder>
-- `{{API_ENTRY_POINTS}}` <API entry modules/commands>
-- `{{API_ROUTES}}` <route list or router modules>
-- `{{API_CROSS_CUTTING}}` <CORS/auth/limits references>
-- `{{FRONTEND_ROOT}}` <frontend root folder>
-- `{{FRONTEND_ENTRY}}` <frontend app entry file>
-- `{{FRONTEND_SHARED_PATHS}}` <shared types/utils paths>
-- `{{FRONTEND_TEST_PATHS}}` <frontend test folder>
-- `{{FRONTEND_TEST_UTILS_PATHS}}` <test utils paths>
-- `{{FRONTEND_TEST_COMMANDS}}` <test command(s)>
-- `{{FRONTEND_MCP_TEST_PATHS}}` <MCP demo test paths>
-- `{{FRONTEND_MCP_TEST_COMMANDS}}` <MCP demo command(s)>
-- `{{FRONTEND_TEST_ALL_COMMAND}}` <run all tests command>
-- `{{FRONTEND_TEST_COVERAGE_COMMAND}}` <coverage command>
-- `{{FRONTEND_TEST_WATCH_COMMAND}}` <watch mode command>
-- `{{FRONTEND_COVERAGE_PATHS}}` <coverage output paths>
-- `{{FRONTEND_COVERAGE_SUMMARY_PATH}}` <coverage summary path>
-- `{{REQUIRED_TOOLS}}` <tool names and versions>
-- `{{PROD_DEPENDENCIES}}` <production dependencies>
-- `{{TEST_DEPENDENCIES}}` <test dependencies>
-- `{{LINT_DEPENDENCIES}}` <lint/format dependencies>
-- `{{PRECOMMIT_DEPENDENCIES}}` <pre-commit dependencies>
-- `{{TYPE_STUB_DEPENDENCIES}}` <type stubs>
-- `{{SETUP_COMMANDS}}` <install/deps/initialize commands>
-- `{{RUN_COMMANDS}}` <run/start commands>
-- `{{TEST_COMMANDS}}` <test commands>
-- `{{DEPLOY_COMMANDS}}` <deploy commands>
-- `{{UNIFIED_COMPLEXITY}}` <Low/Medium/High>
-- `{{UNIFIED_COST}}` <Free/Low/Medium/High>
-- `{{UNIFIED_BEST_FOR}}` <use cases>
-- `{{PAAS_COMPLEXITY}}` <Low/Medium/High>
-- `{{PAAS_COST}}` <Free/Low/Medium/High>
-- `{{PAAS_BEST_FOR}}` <use cases>
-- `{{SEPARATE_COMPLEXITY}}` <Low/Medium/High>
-- `{{SEPARATE_COST}}` <Free/Low/Medium/High>
-- `{{SEPARATE_BEST_FOR}}` <use cases>
-- `{{DOCKER_COMPLEXITY}}` <Low/Medium/High>
-- `{{DOCKER_COST}}` <Free/Low/Medium/High>
-- `{{DOCKER_BEST_FOR}}` <use cases>
-- `{{UNIFIED_BUILD_COMMANDS}}` <build commands>
-- `{{UNIFIED_START_COMMAND}}` <start command>
-- `{{UNIFIED_HOSTS}}` <hosting providers>
-- `{{BACKEND_BUILD_COMMANDS}}` <backend build commands>
-- `{{BACKEND_START_COMMAND}}` <backend start command>
-- `{{BACKEND_HOSTS}}` <backend hosting providers>
-- `{{BACKEND_ENV_VARS}}` <backend env var names>
-- `{{FRONTEND_BUILD_COMMANDS}}` <frontend build commands>
-- `{{FRONTEND_PUBLISH_DIR}}` <frontend output dir>
-- `{{FRONTEND_HOSTS}}` <frontend hosting providers>
-- `{{FRONTEND_ENV_VARS}}` <frontend env var names>
-- `{{DOCKER_BASE_IMAGE}}` <base image name>
-- `{{DOCKER_BUILD_COMMAND}}` <docker build command>
-- `{{DOCKER_RUN_COMMAND}}` <docker run command>
-- `{{BACKEND_ENV_VAR_LIST}}` <backend env vars with descriptions>
-- `{{FRONTEND_ENV_VAR_LIST}}` <frontend env vars with descriptions>
-- `{{UNIFIED_ENV_VARS}}` <env vars for unified deploy>
-- `{{HEALTHCHECK_URL}}` <healthcheck URL>
-- `{{PROD_URL}}` <production URL>
-- `{{SMOKE_TEST_COMMAND}}` <smoke test command>
+- `TwitchClipper` <project display name>
+- `Python` <e.g., Python, TypeScript>
+- `None (uses Selenium + MoviePy)` <e.g., FastAPI, React, None>
+- `CLI: python cli/main.py; API: uvicorn api.main:app --reload; UI: Not implemented yet (npm run dev)` <CLI/API/UI entry commands>
+- `python cli/main.py` <CLI entry command or module path>
+- `uvicorn api.main:app --reload` <API start command>
+- `Not implemented yet (npm run dev)` <frontend dev server command>
+- `Not used` <tutorial or examples command>
+- `Not used` <config file paths>
+- `Not used` <config helper module paths>
+- `Not used` <data folder paths>
+- `Not used` <schema file paths>
+- `backend/` <backend root folder>
+- `Not used` <backend config module paths>
+- `backend/clips.py`, `backend/oneVideo.py`, `backend/transition.py`, `backend/overlay.py` <domain logic module paths>
+- `api/` <backend API module paths>
+- `cli/main.py`, `cli/upload.py`, `cli/testing.py`, `cli/test.py` <backend CLI module paths>
+- `backend` <backend packages for coverage targets>
+- `api/` <API root folder>
+- `uvicorn api.main:app --reload` <API entry modules/commands>
+- `/health` <route list or router modules>
+- `Not used` <CORS/auth/limits references>
+- `frontend/` (planned) <frontend root folder>
+- `Not implemented yet` <frontend app entry file>
+- `Not used` <shared types/utils paths>
+- `Not used` <frontend test folder>
+- `Not used` <test utils paths>
+- `Not used` <test command(s)>
+- `Not used` <MCP demo test paths>
+- `Not used` <MCP demo command(s)>
+- `Not used` <run all tests command>
+- `Not used` <coverage command>
+- `Not used` <watch mode command>
+- `Not used` <coverage output paths>
+- `Not used` <coverage summary path>
+- `Python 3.10+, Selenium, MoviePy, natsort, Pillow, pywin32, Firefox + geckodriver` <tool names and versions>
+  - `geckodriver.exe` should be on your PATH or placed in `backend/` (used by `backend/clips.py`)
+  - Optional env var: `GECKODRIVER_PATH` to override the driver location
+  - First-time setup script: `python scripts/setup_selenium.py`
+- `selenium`, `moviepy`, `natsort`, `Pillow`, `pywin32` <production dependencies>
+- `Not used` <test dependencies>
+- `Not used` <lint/format dependencies>
+- `Not used` <pre-commit dependencies>
+- `Not used` <type stubs>
+- `python -m pip install -r requirements.txt` <install/deps/initialize commands>
+- `python cli/main.py` <run/start commands>
+- `pytest --cov` <test commands>
+  - Integration tests: set `RUN_TWITCH_INTEGRATION=1` and optionally `TWITCH_STREAMER`
+- `Not used` <deploy commands>
+- `Not used` <Low/Medium/High>
+- `Not used` <Free/Low/Medium/High>
+- `Not used` <use cases>
+- `Not used` <Low/Medium/High>
+- `Not used` <Free/Low/Medium/High>
+- `Not used` <use cases>
+- `Not used` <Low/Medium/High>
+- `Not used` <Free/Low/Medium/High>
+- `Not used` <use cases>
+- `Not used` <Low/Medium/High>
+- `Not used` <Free/Low/Medium/High>
+- `Not used` <use cases>
+- `Not used` <build commands>
+- `uvicorn api.main:app --reload` <start command>
+- `Not used` <hosting providers>
+- `Not used` <backend build commands>
+- `uvicorn api.main:app --reload` <backend start command>
+- `Not used` <backend hosting providers>
+- `Not used` <backend env var names>
+- `Not implemented yet (npm run build)` <frontend build commands>
+- `Not used` <frontend output dir>
+- `Not used` <frontend hosting providers>
+- `Not used` <frontend env var names>
+- `Not used` <base image name>
+- `Not used` <docker build command>
+- `Not used` <docker run command>
+- `Not used` <backend env vars with descriptions>
+- `Not used` <frontend env vars with descriptions>
+- `Not used` <env vars for unified deploy>
+- `Not used` <healthcheck URL>
+- `Not used` <production URL>
+- `Not used` <smoke test command>
 
 If a section does not apply to the project, remove it or mark it "Not used".
 

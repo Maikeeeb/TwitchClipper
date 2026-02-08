@@ -43,6 +43,9 @@ backend architecture.
 - Add or update tests in the backend test suite
 - Run relevant test commands before committing
 - Maintain coverage targets defined in @AGENTS.md
+- If you changed production code, either add/update backend tests or open a TODO in the
+  workflow context for Testing Agent that specifies exactly what to test.
+- If tests changed, include the Test Change Report as defined in AGENTS.md.
 
 ## Handoff Artifact Usage (Multi-Agent Workflows)
 

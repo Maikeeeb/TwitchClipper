@@ -1,2 +1,9 @@
-# Production dependencies for {{PROJECT_NAME}} <project name>
-{{PROD_DEPENDENCIES}}  # <one dependency per line, e.g., fastapi>=0.104.0>
+# Production dependencies for TwitchClipper
+selenium
+moviepy
+natsort
+Pillow
+pywin32
+fastapi
+uvicorn
+webdriver-manager

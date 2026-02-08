@@ -7,10 +7,10 @@ with your real stack details.
 
 | Option | Complexity | Cost | Best For |
 |--------|-----------|------|----------|
-| **Unified deployment** | {{UNIFIED_COMPLEXITY}} <Low/Medium/High> | {{UNIFIED_COST}} <Free/Low/Medium/High> | {{UNIFIED_BEST_FOR}} <use cases> |
-| **Platform-as-a-Service** | {{PAAS_COMPLEXITY}} <Low/Medium/High> | {{PAAS_COST}} <Free/Low/Medium/High> | {{PAAS_BEST_FOR}} <use cases> |
-| **Separate deployments** | {{SEPARATE_COMPLEXITY}} <Low/Medium/High> | {{SEPARATE_COST}} <Free/Low/Medium/High> | {{SEPARATE_BEST_FOR}} <use cases> |
-| **Docker / Containers** | {{DOCKER_COMPLEXITY}} <Low/Medium/High> | {{DOCKER_COST}} <Free/Low/Medium/High> | {{DOCKER_BEST_FOR}} <use cases> |
+| **Unified deployment** | Not used | Not used | Not used |
+| **Platform-as-a-Service** | Not used | Not used | Not used |
+| **Separate deployments** | Not used | Not used | Not used |
+| **Docker / Containers** | Not used | Not used | Not used |
 
 ---
 
@@ -18,9 +18,9 @@ with your real stack details.
 
 Describe the unified approach (single service, same runtime).
 
-- Build steps: `{{UNIFIED_BUILD_COMMANDS}}` <build commands>
-- Start command: `{{UNIFIED_START_COMMAND}}` <start command>
-- Hosting options: `{{UNIFIED_HOSTS}}` <provider list>
+- Build steps: `Not used`
+- Start command: `uvicorn api.main:app --reload`
+- Hosting options: `Not used`
 
 ---
 
@@ -30,17 +30,17 @@ Describe independent frontend/backend deployments.
 
 ### Backend
 
-- Build steps: `{{BACKEND_BUILD_COMMANDS}}` <backend build commands>
-- Start command: `{{BACKEND_START_COMMAND}}` <backend start command>
-- Hosting options: `{{BACKEND_HOSTS}}` <provider list>
-- Required environment variables: `{{BACKEND_ENV_VARS}}` <env var names>
+- Build steps: `Not used`
+- Start command: `uvicorn api.main:app --reload`
+- Hosting options: `Not used`
+- Required environment variables: `Not used`
 
 ### Frontend
 
-- Build steps: `{{FRONTEND_BUILD_COMMANDS}}` <frontend build commands>
-- Publish directory: `{{FRONTEND_PUBLISH_DIR}}` <output dir>
-- Hosting options: `{{FRONTEND_HOSTS}}` <provider list>
-- Required environment variables: `{{FRONTEND_ENV_VARS}}` <env var names>
+- Build steps: `Not implemented yet (npm run build)`
+- Publish directory: `Not used`
+- Hosting options: `Not used`
+- Required environment variables: `Not used`
 
 ---
 
@@ -48,9 +48,9 @@ Describe independent frontend/backend deployments.
 
 Document containerization strategy if used.
 
-- Base image: `{{DOCKER_BASE_IMAGE}}` <e.g., python:3.12-slim>
-- Build command: `{{DOCKER_BUILD_COMMAND}}` <docker build ...>
-- Run command: `{{DOCKER_RUN_COMMAND}}` <docker run ...>
+- Base image: `Not used`
+- Build command: `Not used`
+- Run command: `Not used`
 
 ---
 
@@ -58,11 +58,11 @@ Document containerization strategy if used.
 
 ### Backend
 
-`{{BACKEND_ENV_VAR_LIST}}` <name=value pairs with descriptions>
+`Not used`
 
 ### Frontend
 
-`{{FRONTEND_ENV_VAR_LIST}}` <name=value pairs with descriptions>
+`Not used`
 
 ---
 

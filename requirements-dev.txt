@@ -1,11 +1,14 @@
 # Testing
-{{TEST_DEPENDENCIES}}  # <one per line, e.g., pytest>=7.4.0>
+pytest
+pytest-cov
+httpx
 
 # Code Quality
-{{LINT_DEPENDENCIES}}  # <formatters/linters, e.g., black>=24.0.0>
+black
+mypy
 
 # Pre-commit
-{{PRECOMMIT_DEPENDENCIES}}  # <pre-commit tooling>
+pre-commit
 
 # Type stubs
-{{TYPE_STUB_DEPENDENCIES}}  # <type stub packages>
+# Not used

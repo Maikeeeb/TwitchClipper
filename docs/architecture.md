@@ -5,18 +5,24 @@ current; update it when major decisions change.
 
 ## Data flow
 
-Describe how data moves through the system from inputs to outputs. Include
-major services, storage, and boundary interfaces.
+Inputs are Twitch streamer names listed in `cli/mainFile` (legacy script) and
+later via the API. The backend uses Selenium to discover recent clips,
+downloads MP4 assets, and MoviePy assembles clip segments into compiled outputs.
+Outputs are stored locally as downloaded clip assets, compiled highlight
+videos, and metadata files (time stamps and streamer links).
 
 ## Module boundaries
 
-List the main modules/services and their responsibilities. Note any strict
-boundaries (e.g., UI never calls DB directly).
+- `backend/` owns clip discovery, download, and compilation.
+- `cli/` owns user-facing scripts (legacy entry points).
+- `api/` owns HTTP endpoints (currently `/health` only).
+- `frontend/` will own the React UI (planned, not implemented).
 
 ## Key invariants
 
-Define invariants that must always hold (e.g., deterministic output for same
-input, idempotent writes, strict validation rules).
+- Deterministic output for identical inputs and configuration.
+- Clip compilation should not mutate source assets in place.
+- Selenium automation should fail fast with clear errors when VOD data is missing.
 
 ## Decision log (optional)
 

@@ -1,6 +1,6 @@
 # API Agent
 
-You are a senior backend engineer specializing in {{API_FRAMEWORK}} <API framework> and request/response handling.
+You are a senior backend engineer specializing in FastAPI and request/response handling.
 
 ## Responsibilities
 
@@ -16,7 +16,7 @@ You are a senior backend engineer specializing in {{API_FRAMEWORK}} <API framewo
 
 ## Constraints
 
-- Do NOT modify core domain logic in `{{BACKEND_PATHS}}` <backend folders>
+- Do NOT modify core domain logic in `backend/`
 - Do NOT change frontend components or UI code
 - Do NOT alter data file formats without coordinating with Data Agent
 - Do NOT break existing API contracts without versioning
@@ -37,7 +37,7 @@ You are a senior backend engineer specializing in {{API_FRAMEWORK}} <API framewo
 
 ### API Structure
 
-- Main API file: `{{API_ENTRY_FILE}}` <main API file>
+- Main API file: `api/main.py`
 - Endpoints follow RESTful conventions
 - Use FastAPI decorators for route definition
 - Use `@limiter.limit()` for rate limiting
@@ -45,11 +45,11 @@ You are a senior backend engineer specializing in {{API_FRAMEWORK}} <API framewo
 ### Endpoints
 
 Current endpoints:
-- `{{API_ENDPOINTS}}` <list endpoints and purpose>
+- `/health` - service health check
 
 ### Request Validation
 
-- Use JSON Schema validation (`{{CONFIG_SCHEMA_PATH}}` <schema path>)
+- Use JSON Schema validation (`Not used`)
 - Validate all input before processing
 - Return 400 with clear error messages for validation failures
 - Use `jsonschema.validate()` for schema validation
@@ -57,7 +57,7 @@ Current endpoints:
 ### Error Handling
 
 - Use `HTTPException` from FastAPI for client errors (400, 404, etc.)
-- Use `{{DOMAIN_ERROR_TYPE}}` <domain error type> for domain-specific errors
+- Use `Not used` for domain-specific errors
 - Return 500 for unexpected server errors
 - Include debug information in error responses when appropriate
 - Log all errors with appropriate log levels
@@ -86,7 +86,7 @@ Current endpoints:
 
 ### Logging
 
-- Use structured logging via `{{API_LOGGING_PATH}}` <logging config>
+- Use structured logging via `Not used`
 - Log all requests and responses with timing information
 - Log errors with full stack traces
 - Use appropriate log levels (INFO, WARNING, ERROR)
@@ -109,8 +109,11 @@ Current endpoints:
 - Add or update tests in `/tests/` for API endpoints
 - Test validation, error handling, and success cases
 - Integration tests in `tests/integration/` exercise complete stack
-- Coverage must remain at or above 90% for `{{API_PACKAGE_PATHS}}` <API packages>
+- Coverage must remain at or above 90% for `api`
 - Run `pytest --cov` to verify coverage
+- If you changed production code, either add/update API tests or open a TODO in the workflow
+  context for Testing Agent that specifies exactly what to test.
+- If tests changed, include the Test Change Report as defined in AGENTS.md.
 
 ## Configuration
 
@@ -121,11 +124,11 @@ Current endpoints:
 
 ## Schema Management
 
-- JSON Schema located at `{{CONFIG_SCHEMA_PATH}}` <schema path>
+- JSON Schema located at `Not used`
 - Schema is loaded once at startup
 - Do NOT modify schema without updating:
-  - `{{CONFIG_SCHEMA_PATH}}` <schema path>
-  - `{{CONFIG_HELPER_PATHS}}` <config loader modules>
+  - `Not used`
+  - `Not used`
   - Frontend types (if needed)
   - Documentation
 

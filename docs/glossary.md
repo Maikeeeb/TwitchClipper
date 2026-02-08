@@ -5,6 +5,6 @@ learn quickly.
 
 ## Terms
 
-- **{{TERM_1}}**: {{TERM_1_DEFINITION}}
-- **{{TERM_2}}**: {{TERM_2_DEFINITION}}
-- **{{TERM_3}}**: {{TERM_3_DEFINITION}}
+- **VOD**: Twitch video-on-demand recording of a livestream.
+- **Clip**: Short highlight segment extracted from a VOD.
+- **High point**: Time window with elevated chat activity used to find clips.

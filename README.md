@@ -1,7 +1,8 @@
 ---
-# {{PROJECT_NAME}} <project display name>
+# TwitchClipper
 
-Short description of the project goes here.
+Download Twitch clips from a streamer list, name them with streamer and views,
+then compile into a montage.
 
 ## What this template provides
 
@@ -15,7 +16,7 @@ Short description of the project goes here.
 
 1. Create a new repo from this template:
    ```bash
-   gh repo create {{NEW_REPO_NAME}} <new-repo-name> --template {{TEMPLATE_REPO}} <owner/template-repo> --clone
+   gh repo create TwitchClipper --template Not used --clone
    ```
 2. Follow the checklist in `docs/setup.md` to replace placeholders and configure the repo.
 
@@ -32,39 +33,55 @@ project-specific configuration.
 
 ## Project overview
 
-- **Primary language:** `{{PRIMARY_LANGUAGE}}` <e.g., Python, TypeScript>
-- **Primary framework:** `{{PRIMARY_FRAMEWORK}}` <e.g., FastAPI, React, None>
-- **Entry points:** `{{ENTRY_POINTS}}` <CLI/API/UI commands or scripts>
-- **Configuration files:** `{{CONFIG_PATHS}}` <paths like config.json, .env>
+- **Primary language:** `Python`
+- **Primary framework:** `None (uses Selenium + MoviePy; API planned with FastAPI)`
+- **Entry points:** `CLI: python cli/main.py; API: uvicorn api.main:app --reload; UI: Not implemented yet (npm run dev)`
+- **Configuration files:** `Not used`
 
 ## Development
 
 ### Prerequisites
 
-- `{{REQUIRED_TOOLS}}` <tool names and versions, e.g., Python 3.12, Node 20>
+- `Python 3.10+, Selenium, MoviePy, natsort, Pillow, pywin32, Firefox + geckodriver`
+- `geckodriver.exe` should be on your PATH or placed in `backend/` (the scripts look for it there)
+- Optional: set `GECKODRIVER_PATH` to a custom driver path
 
 ### Local setup
 
 ```bash
-{{SETUP_COMMANDS}} <commands to install deps and initialize environment>
+python -m pip install -r requirements.txt
+```
+
+### Selenium setup (first-time)
+
+Download a compatible geckodriver into `backend/`:
+```bash
+python scripts/setup_selenium.py
 ```
 
 ### Run locally
 
 ```bash
-{{RUN_COMMANDS}} <commands to start the app locally>
+python cli/main.py
+uvicorn api.main:app --reload
 ```
 
 ## Testing
 
 ```bash
-{{TEST_COMMANDS}} <commands to run tests>
+pytest --cov
+```
+
+Integration tests that hit twitch.tv are skipped by default. To enable (PowerShell):
+```bash
+$env:RUN_TWITCH_INTEGRATION=1
+$env:TWITCH_STREAMER="zubatlel"
 ```
 
 ## Deployment
 
 ```bash
-{{DEPLOY_COMMANDS}} <commands or scripts used to deploy>
+Not used
 ```
 
 ## Docs

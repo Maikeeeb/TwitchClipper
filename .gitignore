@@ -20,6 +20,8 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache/
+.pytest-tmp/
+pytest-tmp/
 frontend/coverage/
 .mypy_cache/
 
@@ -47,6 +49,15 @@ desktop.ini
 # Log files
 *.log
 logs/
+
+# Media output and legacy artifacts
+currentVideos/
+fullVideos/
+*.mp4
+geckodriver.exe
+geckodriver.log
+time stamps
+streamer links
 
 # Temporary files
 *.tmp

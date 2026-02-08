@@ -7,16 +7,16 @@ your real commands and provider.
 
 1. Build:
    ```bash
-   {{UNIFIED_BUILD_COMMANDS}} <build commands>
+   Not used
    ```
 2. Start:
    ```bash
-   {{UNIFIED_START_COMMAND}} <start command>
+   uvicorn api.main:app --reload
    ```
 3. Configure environment variables:
-   - `{{UNIFIED_ENV_VARS}}` <env var names>
+   - `Not used`
 4. Verify health check:
-   - `{{HEALTHCHECK_URL}}` <healthcheck URL>
+   - `Not used`
 
 ## Option B: Separate frontend + backend
 
@@ -24,26 +24,26 @@ your real commands and provider.
 
 1. Build:
    ```bash
-   {{BACKEND_BUILD_COMMANDS}} <backend build commands>
+   Not used
    ```
 2. Start:
    ```bash
-   {{BACKEND_START_COMMAND}} <backend start command>
+   uvicorn api.main:app --reload
    ```
 3. Configure environment variables:
-   - `{{BACKEND_ENV_VARS}}` <backend env var names>
+   - `Not used`
 
 ### Frontend
 
 1. Build:
    ```bash
-   {{FRONTEND_BUILD_COMMANDS}} <frontend build commands>
+   Not implemented yet (npm run build)
    ```
-2. Publish directory: `{{FRONTEND_PUBLISH_DIR}}` <output dir>
+2. Publish directory: `Not used`
 3. Configure environment variables:
-   - `{{FRONTEND_ENV_VARS}}` <frontend env var names>
+   - `Not used`
 
 ## Validation
 
-- Confirm production URL: `{{PROD_URL}}` <production URL>
-- Smoke test command: `{{SMOKE_TEST_COMMAND}}` <smoke test command>
+- Confirm production URL: `Not used`
+- Smoke test command: `Not used`

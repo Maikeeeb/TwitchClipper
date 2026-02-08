@@ -11,7 +11,7 @@ This directory contains reusable agent role definitions for AI-assisted developm
 | Agent | Focus Area | Key Responsibilities |
 |-------|------------|---------------------|
 | **[Planner Agent](planner-agent.md)** | **Prompt analysis & coordination** | **Analyzes prompts, routes to agents, coordinates execution** |
-| [Backend Solver Agent](backend-solver-agent.md) | Backend/domain logic | {{DOMAIN_NAME}} <domain name> algorithms, search, scoring |
+| [Backend Solver Agent](backend-solver-agent.md) | Backend/domain logic | Twitch clip compilation algorithms, search, scoring |
 | [Frontend UI Agent](frontend-ui-agent.md) | React/TypeScript UI | Components, Material-UI, user interactions |
 | [API Agent](api-agent.md) | FastAPI endpoints | REST API, validation, error handling |
 | [Testing Agent](testing-agent.md) | Test automation | pytest, Vitest, test coverage |
@@ -41,7 +41,7 @@ The Planner Agent will chain: API Agent → Frontend UI Agent → Testing Agent
 ## Agent Responsibilities
 
 ### Backend Solver Agent
-- {{DOMAIN_NAME}} <domain name> algorithm implementation
+- Twitch clip compilation algorithm implementation
 - Search and optimization
 - Scoring functions and tradeoffs
 - Deterministic algorithm guarantees
@@ -68,8 +68,8 @@ The Planner Agent will chain: API Agent → Frontend UI Agent → Testing Agent
 - Test data and fixtures
 
 ### Data Agent
-- Data file management (`{{DATA_PATHS}}` <data folders>)
-- Schema validation (`{{SCHEMA_PATHS}}` <schema folders>)
+- Data file management (`Not used`)
+- Schema validation (`Not used`)
 - Data consistency and integrity
 - Domain data parsing
 - Configuration data validation

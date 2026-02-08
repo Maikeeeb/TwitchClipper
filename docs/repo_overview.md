@@ -5,39 +5,44 @@ This document is the hub for repo structure, entry points, and pointers to key f
 ## Repository map (folders only)
 
 ```
-Project Template/ - Repository root (rename as needed for your project)
+TwitchClipper/ - Repository root
 ├── .github/ - GitHub settings and automation
 │   └── workflows/ - CI workflows and checks (e.g., tests, lint)
 ├── agents/ - Agent role definitions and domain guidance
+├── api/ - FastAPI service
+├── backend/ - Backend logic (clip download/processing)
+├── cli/ - CLI entry points
 ├── docs/ - Project documentation templates and guides
+├── tests/ - Pytest suites
 └── workflows/ - Multi-agent workflow templates
     └── contexts/ - Workflow handoff artifacts
 ```
 
 ## Data files and schemas
 
-- **Primary data** lives in `{{DATA_PATHS}}` <data directories>
-- **Schemas** live in `{{SCHEMA_PATHS}}` <schema paths>
+- **Primary data** lives in `Not used`
+- **Schemas** live in `Not used`
 - **Configuration schema** mirrors the runtime config model and drives validation for API/UI inputs
 
-## Backend layout (`{{BACKEND_ROOT}}` <backend root folder>)
+## Backend layout (`backend/`)
 
-- **Configuration**: `{{BACKEND_CONFIG_PATHS}}` <config modules>
-- **Domain logic**: `{{BACKEND_DOMAIN_PATHS}}` <core logic modules>
-- **Public API**: `{{BACKEND_API_PATHS}}` <backend API modules>
-- **CLI entrypoint**: `{{BACKEND_CLI_PATHS}}` <CLI modules or scripts>
+- **Configuration**: `Not used`
+- **Domain logic**: `backend/clips.py`, `backend/oneVideo.py`, `backend/transition.py`,
+  `backend/overlay.py`
+- **Public API**: `Not implemented yet`
+- **CLI entrypoint**: `cli/main.py`
 
-## API service (`{{API_ROOT}}` <API root folder>)
+## API service (`api/`)
 
-- Entry points: `{{API_ENTRY_POINTS}}` <startup modules/commands>
-- Routes: `{{API_ROUTES}}` <route modules or list>
-- CORS/auth/limits: `{{API_CROSS_CUTTING}}` <cross-cutting concerns>
+- Entry points: `uvicorn api.main:app --reload`
+- Routes: `/health`
+- CORS/auth/limits: `Not used`
 
-## Frontend (`{{FRONTEND_ROOT}}` <frontend root folder>)
+## Frontend (`frontend/` planned)
 
-- App entry: `{{FRONTEND_ENTRY}}` <main entry file>
-- Shared types/utils: `{{FRONTEND_SHARED_PATHS}}` <shared modules>
-- Testing: `{{FRONTEND_TEST_PATHS}}` <test folders>
+- App entry: `Not implemented yet (planned React entry)`
+- Shared types/utils: `Not used`
+- Testing: `Not used`
 
 ## Pointers (start here to find things fast)
 
@@ -47,7 +52,9 @@ Project Template/ - Repository root (rename as needed for your project)
 - `docs/setup.md` - First-agent setup checklist and placeholder list
 - `docs/audit.md` - Placeholder audit tracking
 - `docs/architecture.md` - Architecture template (data flow, boundaries, invariants)
+- `docs/backend_report.md` - Backend behavior report and risks
 - `docs/glossary.md` - Domain terminology quick reference
+- `docs/TODO.md` - Prioritized backend fixes and features
 - `CONTRIBUTING.md` - PR checklist and standards
 - `.pre-commit-config.yaml` - Formatting and lint hooks
 - `.editorconfig` - Whitespace and line ending rules
