@@ -39,8 +39,9 @@ TwitchClipper/ - Repository root
 
 ## API service (`api/`)
 
-- Entry points: `uvicorn api.main:app --reload`
-- Routes: `/health`
+- **FastAPI (job API)**: `api/app.py` — in-memory job queue, clip-montage submit, status, run-next dev helper.
+- **Run**: `uvicorn api.app:app --reload`
+- **Endpoints**: `GET /health` (ok check), `POST /jobs/clip-montage` (submit job), `GET /jobs/{job_id}` (status), `POST /jobs/run-next` (dev helper: process one queued job).
 - CORS/auth/limits: `Not used`
 
 ## Frontend (`frontend/` planned)

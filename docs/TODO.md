@@ -20,23 +20,89 @@ For product direction and phased deliverables (ranking, job queue, VOD highlight
 - [x] TODO-SELECT-001 — Select ranked clips to hit a target montage duration range (default 8–10 minutes).
 
 ## EPIC: Job queue and background worker
-- [ ] TODO-JOBS-001 Define job states and job data model (queued running done failed)
-- [ ] TODO-JOBS-002 Implement in memory job queue
-- [ ] TODO-JOBS-003 Implement worker loop that runs jobs
-- [ ] TODO-JOBS-004 Add CLI command to submit job and poll status
-- [ ] TODO-JOBS-005 Add tests for job state transitions
+- [x] TODO-JOBS-001 Define job states and job data model (queued running done failed)
+- [x] TODO-JOBS-002 Implement in memory job queue
+- [x] TODO-JOBS-003 Implement worker loop that runs jobs
+- [x] TODO-JOBS-004 Add API endpoints
+- [x] TODO-JOBS-005 Add tests for job state transitions (end-to-end through API + worker).
 
 ## EPIC: VOD + Chat auto highlights
-- [ ] TODO-VOD-001 Define inputs and outputs for vod job (paths, metadata files)
-- [ ] TODO-VOD-002 Implement vod downloader (save mp4 locally)
-- [ ] TODO-VOD-003 Implement chat log fetch or import (save raw chat to file)
-- [ ] TODO-VOD-004 Implement chat spike detector (messages per second)
-- [ ] TODO-VOD-005 Implement segment generator (spike -> start/end window)
-- [ ] TODO-VOD-006 Implement segment ranking (spike score + keyword bonus)
-- [ ] TODO-VOD-007 Cut segments from vod using ffmpeg (save as mp4 clips)
-- [ ] TODO-VOD-008 Compile montage from generated segments (reuse montage)
-- [ ] TODO-VOD-009 End to end CLI command (one command runs pipeline)
-- [ ] TODO-VOD-010 Add tests for spike detector and segment generator
+
+# Phase 1 — Data Contracts (No I/O, No Network)
+
+- [ ] TODO-VOD-001 Define VOD job data model (inputs, outputs, metadata structure)
+  - Define VodJobParams (vod_url OR vod_id, output_dir, optional keyword list)
+  - Define VodAsset (vod_path, chat_path, segments, metadata json schema)
+  - Define Segment model (start_s, end_s, spike_score, keyword_score, total_score)
+  - No downloading yet — pure data structure only
+  - Add unit tests for model validation
+
+# Phase 2 — Chat Analysis (Pure Logic, Fully Testable Offline)
+
+- [ ] TODO-VOD-002 Implement chat spike detector (messages per second)
+  - Input: list of (timestamp, message)
+  - Output: list of spike windows (timestamp buckets with counts)
+  - Deterministic and offline
+  - Add strong unit tests (normal, empty, edge cases)
+
+- [ ] TODO-VOD-003 Implement segment generator (spike → time window)
+  - Convert spike timestamps into (start_s, end_s)
+  - Configurable window size (e.g., ±15s around spike)
+  - Merge overlapping windows
+  - Unit tests required
+
+- [ ] TODO-VOD-004 Implement segment ranking
+  - Score based on spike strength (primary signal)
+  - Optional keyword bonus (similar to clip scoring)
+  - Sort highest first
+  - Add ranking unit tests
+
+# Phase 3 — Chat & VOD I/O (Still Separate from Worker)
+
+- [ ] TODO-VOD-005 Implement chat log importer
+  - Accept local chat JSON or raw file
+  - Parse into structured (timestamp, message)
+  - No network required yet
+  - Add parsing tests
+
+- [ ] TODO-VOD-006 Implement VOD downloader
+  - Download full VOD mp4 to disk
+  - Store path in VodAsset
+  - Graceful failure handling
+  - Do NOT cut segments yet
+
+# Phase 4 — Video Processing (Heavy I/O)
+
+- [ ] TODO-VOD-007 Cut segments from VOD using ffmpeg
+  - Input: VOD mp4 + ranked segments
+  - Output: individual mp4 clips
+  - Ensure no segment exceeds VOD bounds
+  - Add basic integration tests with synthetic mp4
+
+- [ ] TODO-VOD-008 Compile montage from generated segments
+  - Reuse existing montage pipeline logic
+  - Respect duration window (8–10 minutes)
+  - Store final montage path in VodAsset metadata
+
+# Phase 5 — Job Integration
+
+- [ ] TODO-VOD-009 Add vod_highlights job type
+  - Register handler in backend/worker.py
+  - Params: vod_url (or id), output_dir, optional keywords
+  - Worker should:
+      1) Download VOD
+      2) Load/import chat
+      3) Detect spikes
+      4) Generate + rank segments
+      5) Cut segments
+      6) Compile montage
+  - Update job.result with output paths and counts
+
+- [ ] TODO-VOD-010 Add end-to-end API test for vod_highlights job
+  - Use fake chat data
+  - Use synthetic test mp4
+  - Ensure QUEUED → RUNNING → DONE flow works
+
 
 ## EPIC: Database persistence
 - [ ] TODO-DB-001 Add SQLite persistence for jobs and outputs

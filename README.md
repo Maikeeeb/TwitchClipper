@@ -35,7 +35,7 @@ project-specific configuration.
 
 - **Primary language:** `Python`
 - **Primary framework:** `None (uses Selenium + MoviePy; API planned with FastAPI)`
-- **Entry points:** `CLI: python cli/main.py; API: uvicorn api.main:app --reload; UI: Not implemented yet (npm run dev)`
+- **Entry points:** `CLI: python cli/main.py; Job API: uvicorn api.app:app --reload; UI: Not implemented yet (npm run dev)`
 - **Configuration files:** `Not used`
 
 ## Development
@@ -63,7 +63,8 @@ python scripts/setup_selenium.py
 
 ```bash
 python cli/main.py
-uvicorn api.main:app --reload
+uvicorn api.app:app --reload
+# or: uvicorn api.main:app --reload
 ```
 
 ## Testing

@@ -1,6 +1,2 @@
-from fastapi import FastAPI
-
-from api.routes.health import router as health_router
-
-app = FastAPI(title="TwitchClipper API")
-app.include_router(health_router)
+# Re-export the main app from api.app so uvicorn api.main:app still works.
+from api.app import app

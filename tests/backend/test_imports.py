@@ -8,9 +8,12 @@ Test Plan
 from backend import clips
 from backend import clip_models
 from backend import filtering
+from backend import job_queue
+from backend import jobs
 from backend import oneVideo
 from backend import pipeline
 from backend import selection
+from backend import worker
 
 
 def test_backend_modules_importable() -> None:
@@ -28,3 +31,10 @@ def test_backend_modules_importable() -> None:
     assert pipeline.DEFAULT_MAX_CLIPS == 20
     assert callable(selection.select_clips_for_duration)
     assert isinstance(pipeline.PER_STREAMER_K, int) and pipeline.PER_STREAMER_K > 0
+    assert hasattr(jobs, "Job") and hasattr(jobs, "JobStatus")
+    assert jobs.JobStatus.QUEUED is not None
+    assert callable(getattr(jobs.Job, "start")) and callable(getattr(jobs.Job, "succeed"))
+    assert hasattr(job_queue, "InMemoryJobQueue")
+    assert hasattr(worker, "Worker")
+    assert callable(getattr(worker.Worker, "run_next"))
+    assert callable(getattr(worker.Worker, "run_until_empty"))
