@@ -6,6 +6,7 @@ Test Plan
 """
 
 from backend import clips
+from backend import chat_spikes
 from backend import clip_models
 from backend import filtering
 from backend import job_queue
@@ -20,6 +21,8 @@ def test_backend_modules_importable() -> None:
     # Covers: TODO-TEST-IMPORTS
     assert callable(clips.getclips)
     assert callable(clips.download_clip)
+    assert callable(chat_spikes.bucket_chat_messages)
+    assert callable(chat_spikes.detect_spikes)
     assert callable(oneVideo.compile)
     assert hasattr(clip_models, "ClipRef")
     assert hasattr(clip_models, "ClipAsset")

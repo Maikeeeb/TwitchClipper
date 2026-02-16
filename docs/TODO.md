@@ -30,7 +30,7 @@ For product direction and phased deliverables (ranking, job queue, VOD highlight
 
 ## Phase 1 — Data Contracts (No I/O, No Network)
 
-- [ ] TODO-VOD-001 Define VOD job data model (inputs, outputs, metadata structure)
+- [x] TODO-VOD-001 Define VOD job data model (inputs, outputs, metadata structure)
   - Define VodJobParams (vod_url OR vod_id, output_dir, optional keyword list)
   - Define VodAsset (vod_path, chat_path, segments, metadata json schema)
   - Define Segment model (start_s, end_s, spike_score, keyword_score, total_score)
@@ -39,7 +39,7 @@ For product direction and phased deliverables (ranking, job queue, VOD highlight
 
 ## Phase 2 — Chat Analysis (Pure Logic, Fully Testable Offline)
 
-- [ ] TODO-VOD-002 Implement chat spike detector (messages per second)
+- [x] TODO-VOD-002 Implement chat spike detector (messages per second)
   - Input: list of (timestamp, message)
   - Output: list of spike windows (timestamp buckets with counts)
   - Deterministic and offline
