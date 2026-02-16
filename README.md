@@ -69,7 +69,7 @@ uvicorn api.main:app --reload
 ## Testing
 
 ```bash
-pytest --cov
+pytest tests/ --cov=backend --cov-report=term-missing
 ```
 
 Integration tests that hit twitch.tv are skipped by default. To enable (PowerShell):

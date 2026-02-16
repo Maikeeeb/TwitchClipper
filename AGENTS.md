@@ -48,12 +48,13 @@ Available agents:
 
 ## Repository overview
 
-See `docs/repo_overview.md` for the repo map, entry points, and pointers to key files.
+See `docs/repo_overview.md` for the repo map, entry points, and pointers to key files. For product direction and phased deliverables, see `docs/roadmap.md`.
 
 ## TODO tracking
 
 - Track work items in `docs/TODO.md`.
 - After completing tasks, check whether the task is listed in `docs/TODO.md` and mark it completed if applicable.
+- Tasks are organized as numbered tickets (e.g. `TODO-RANK-001`, `TODO-VOD-004`) under Epics. Prefer small, one-ticket tasks. When a user says "do TODO-VOD-004" or similar, work on that ticket only; do not guess a different scope.
 
 ## Placeholder audit
 
@@ -506,6 +507,13 @@ For domain-specific anti-patterns, see [Backend Solver Agent](agents/backend-sol
 - Prefer the smallest change that satisfies the request
 - Avoid touching unrelated files or logic “while you’re there”
 - Large refactors must be split into staged, reviewable steps
+
+## Ticket discipline
+
+- Work on ONE TODO ticket per change.
+- The ticket id must be referenced in the PR description or commit message.
+- Do not implement future tickets "while you are here".
+- If a ticket is too big, split it into smaller tickets in docs/TODO.md first.
 
 ## Reversibility
 

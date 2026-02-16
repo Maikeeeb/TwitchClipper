@@ -54,6 +54,9 @@ logs/
 currentVideos/
 fullVideos/
 *.mp4
+# Test media (committed for offline tests)
+!tests/media/
+!tests/media/*.mp4
 geckodriver.exe
 geckodriver.log
 time stamps

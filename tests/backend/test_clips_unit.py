@@ -124,7 +124,7 @@ def test_getclips_downloads_with_mocked_driver(tmp_path, monkeypatch):
 
     _patch_getclips_common(monkeypatch)
 
-    clips.getclips(
+    result = clips.getclips(
         "tester",
         current_videos_dir=str(tmp_path),
         max_clips=1,
@@ -134,6 +134,12 @@ def test_getclips_downloads_with_mocked_driver(tmp_path, monkeypatch):
     )
 
     assert list(tmp_path.glob("*.mp4")), "Expected at least one clip download."
+    assert len(result) == 1
+    assert isinstance(result[0], clips.ClipRef)
+    assert result[0].clip_url
+    assert result[0].views == 1000
+    jsons = list(tmp_path.glob("*.json"))
+    assert jsons, "Expected JSON sidecar next to downloaded clip"
 
 
 def test_getclips_skips_duplicate_src(tmp_path, monkeypatch):
@@ -353,13 +359,14 @@ def test_download_clip_from_html(monkeypatch, tmp_path):
     monkeypatch.setattr(clips.urllib.request, "urlopen", _fake_urlopen)
     monkeypatch.setattr(clips.urllib.request, "urlretrieve", _fake_urlretrieve)
 
-    output_path, video_url = clips.download_clip(
+    asset = clips.download_clip(
         "https://www.twitch.tv/someone/clip/Slug",
         output_dir=str(tmp_path),
     )
 
-    assert Path(output_path).exists()
-    assert video_url == "https://cdn.example.com/video-720.mp4?token=abc&sig=def"
+    assert Path(asset.output_path).exists()
+    assert asset.mp4_url == "https://cdn.example.com/video-720.mp4?token=abc&sig=def"
+    assert (Path(asset.output_path).with_suffix(".json")).exists()
 
 
 def test_getclips_respects_zero_max_clips(monkeypatch, tmp_path):
@@ -398,13 +405,13 @@ def test_download_clip_uses_direct_mp4_url(monkeypatch, tmp_path):
 
     monkeypatch.setattr(clips.urllib.request, "urlretrieve", _fake_urlretrieve)
 
-    output_path, video_url = clips.download_clip(
+    asset = clips.download_clip(
         "https://cdn.example.com/video-1080.mp4",
         output_dir=str(tmp_path),
     )
 
-    assert video_url == "https://cdn.example.com/video-1080.mp4"
-    assert Path(output_path).exists()
+    assert asset.mp4_url == "https://cdn.example.com/video-1080.mp4"
+    assert Path(asset.output_path).exists()
     assert captured["url"] == "https://cdn.example.com/video-1080.mp4"
 
 

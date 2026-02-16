@@ -4,8 +4,8 @@ import shutil
 import time
 from datetime import date
 
-from backend.clips import getclips
 from backend.oneVideo import compile as comp
+from backend.pipeline import scrape_filter_rank_download
 
 base_dir = os.path.dirname(__file__)
 repo_root = os.path.abspath(os.path.join(base_dir, os.pardir))
@@ -30,8 +30,7 @@ while True:
             print("Deleted %s" % file_path)
         except Exception as e:
             print('Failed to delete %s. Reason: %s' % (file_path, e))
-    for name in streamer_names:
-        getclips(name)
+    scrape_filter_rank_download(streamer_names, current_videos_dir)
 
     while True:
         try:

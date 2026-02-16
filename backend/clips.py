@@ -4,10 +4,19 @@ import re
 import time
 import threading
 import urllib.request
-from urllib.parse import urlparse
+from datetime import datetime, timezone
 from multiprocessing import Process
+from typing import Union
+from urllib.parse import urlparse
 
 from moviepy.video.VideoClip import TextClip
+
+from backend.clip_models import (
+    ClipAsset,
+    ClipRef,
+    parse_views,
+    write_clip_metadata,
+)
 from moviepy.video.compositing.CompositeVideoClip import (
     CompositeVideoClip,
     concatenate_videoclips,
@@ -58,11 +67,18 @@ def getclips(
     driver=None,
     download=True,
 ):
-    """Scrape a streamer's recent clips and download them locally."""
+    """Scrape a streamer's recent clips; returns list[ClipRef].
+
+    When download=False (e.g. pipeline orchestration): only scrapes and returns ClipRefs.
+    When download=True (default): also downloads clips and writes JSON sidecars.
+    For download-only use download_clip(ClipRef); it writes the JSON sidecar when it downloads.
+    Note: Pipeline uses download_clip; getclips(download=True) is legacy/manual flow."""
     download_list = []
+    downloaded_meta = []  # (ClipRef, output_path, mp4_url) for each queued download
     current_video_urls = set()
     view_count_first = None
     current_video = None
+    results = []
     base_dir = os.path.dirname(__file__)
     repo_root = os.path.abspath(os.path.join(base_dir, os.pardir))
     current_videos_dir = current_videos_dir or os.path.join(repo_root, "currentVideos")
@@ -135,9 +151,7 @@ def getclips(
                 return None
 
             # Wait until the video MP4 appears.
-            WebDriverWait(browser, wait_seconds).until(
-                lambda _drv: _get_video_src()
-            )
+            WebDriverWait(browser, wait_seconds).until(lambda _drv: _get_video_src())
             time.sleep(1)
             attempts = 0
             while attempts < 5:
@@ -154,36 +168,53 @@ def getclips(
             print(current_video)
             current_video_urls.add(current_video)
 
-            # WebDriverWait(browser, 560).until(EC.presence_of_element_located((By.CSS_SELECTOR,
-            #  'h2.tw-ellipsis')))
-            # videoTitle = browser.find_element_by_css_selector(  # gets the video title
-            #   'h2.tw-ellipsis').get_attribute("title")
+            title = None
+            try:
+                WebDriverWait(browser, wait_seconds).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "h2.tw-ellipsis"))
+                )
+                title_elem = browser.find_element(By.CSS_SELECTOR, "h2.tw-ellipsis")
+                title = title_elem.get_attribute("title") or title_elem.text
+            except Exception:
+                pass
 
+            view_count_raw = "0"
             try:
                 WebDriverWait(browser, wait_seconds).until(
                     EC.presence_of_element_located((By.CSS_SELECTOR, ".tw-stat__value"))
                 )
-                view_count = browser.find_element(By.CSS_SELECTOR, ".tw-stat__value").text
+                view_count_raw = browser.find_element(By.CSS_SELECTOR, ".tw-stat__value").text
             except Exception:
-                view_count = "0"
+                pass
 
-            # transtionL.append(threading.Thread(target=oneTransition, args=(videoTitle,
-            # viewCount + name.strip('\n') + '1')))
-            # transtionL[-1].start()  # takes the video title and makes a shit transition
+            views = parse_views(view_count_raw)
+            view_count_str = str(views) if views is not None else "0"
+
+            clip_ref = ClipRef(
+                clip_url=link,
+                streamer=name.strip(),
+                views=views,
+                title=title,
+            )
+            results.append(clip_ref)
+
             print(current_video)
             # File naming convention: <viewcount><streamer>0.mp4 (used by oneVideo.py parsing).
             output_path = os.path.join(
-                current_videos_dir, view_count + name.strip("\n") + "0" + ".mp4"
+                current_videos_dir,
+                view_count_str + name.strip("\n") + "0" + ".mp4",
             )
             if download:
                 download_list.append(
                     threading.Thread(
-                        target=urllib.request.urlretrieve, args=(current_video, output_path)
+                        target=urllib.request.urlretrieve,
+                        args=(current_video, output_path),
                     )
                 )
+                downloaded_meta.append((clip_ref, output_path, current_video))
                 print(output_path)
             if index == 0:
-                view_count_first = view_count
+                view_count_first = view_count_str
 
             if download:
                 while True:
@@ -205,19 +236,28 @@ def getclips(
             except Exception as e:
                 print(e)
 
+        for ref, out_path, mp4_url in downloaded_meta:
+            downloaded_at = datetime.now(timezone.utc).isoformat()
+            asset = ClipAsset(
+                clip_ref=ref,
+                mp4_url=mp4_url,
+                output_path=out_path,
+                downloaded_at=downloaded_at,
+                duration_s=None,
+                created_at=None,
+            )
+            fill_duration(asset)
+            write_clip_metadata(asset)
+
     if download and view_count_first and apply_overlay:
-        overlay_process = Process(
-            target=overlay, args=(view_count_first, name, current_videos_dir)
-        )
+        overlay_process = Process(target=overlay, args=(view_count_first, name, current_videos_dir))
         overlay_process.start()
         overlay_process.join()
         os.remove(
-            os.path.join(
-                current_videos_dir, view_count_first + name.strip("\n") + "0" + ".mp4"
-            )
+            os.path.join(current_videos_dir, view_count_first + name.strip("\n") + "0" + ".mp4")
         )
 
-    return video_links
+    return results
 
 
 def extract_mp4_url_from_html(html_text):
@@ -228,6 +268,22 @@ def extract_mp4_url_from_html(html_text):
     pattern = re.compile(r"""<(?:video|source)[^>]+src=["']([^"']+\.mp4[^"']*)["']""")
     match = pattern.search(unescaped)
     return match.group(1) if match else None
+
+
+def fill_duration(asset: ClipAsset) -> ClipAsset:
+    """
+    Read duration from mp4 file and set asset.duration_s.
+    On error (file missing, unreadable, etc.), sets duration_s=None and returns asset unchanged otherwise.
+    """
+    try:
+        clip = VideoFileClip(asset.output_path)
+        try:
+            asset.duration_s = float(clip.duration)
+        finally:
+            clip.close()
+    except Exception:
+        asset.duration_s = None
+    return asset
 
 
 def _build_firefox_driver(headless=None, geckodriver_path=None):
@@ -248,15 +304,19 @@ def _build_firefox_driver(headless=None, geckodriver_path=None):
 
 
 def download_clip(
-    clip_url,
+    clip_ref: Union[ClipRef, str],
     output_dir=None,
     filename=None,
     driver=None,
     headless=None,
     wait_seconds=30,
     geckodriver_path=None,
-):
-    """Download a Twitch clip by URL and return (output_path, video_url)."""
+) -> ClipAsset:
+    """Download a Twitch clip and return ClipAsset. Writes JSON sidecar next to mp4."""
+    if isinstance(clip_ref, str):
+        clip_ref = ClipRef.from_url(clip_ref)
+    clip_url = clip_ref.clip_url
+
     base_dir = os.path.dirname(__file__)
     repo_root = os.path.abspath(os.path.join(base_dir, os.pardir))
     output_dir = output_dir or os.path.join(repo_root, "currentVideos")
@@ -314,6 +374,10 @@ def download_clip(
     parsed_clip = urlparse(clip_url)
     if filename:
         output_name = filename
+    elif clip_ref.streamer:
+        # Note: {views}{streamer}0 can collide; consider {views}_{streamer}_{clip_id}.mp4 later
+        view_str = str(clip_ref.views) if clip_ref.views is not None else "0"
+        output_name = f"{view_str}{clip_ref.streamer}0.mp4"
     else:
         video_basename = os.path.basename(parsed_video.path)
         if video_basename:
@@ -326,7 +390,19 @@ def download_clip(
     output_path = os.path.join(output_dir, output_name)
 
     urllib.request.urlretrieve(video_url, output_path)
-    return output_path, video_url
+
+    downloaded_at = datetime.now(timezone.utc).isoformat()
+    asset = ClipAsset(
+        clip_ref=clip_ref,
+        mp4_url=video_url,
+        output_path=output_path,
+        downloaded_at=downloaded_at,
+        duration_s=None,
+        created_at=None,
+    )
+    fill_duration(asset)
+    write_clip_metadata(asset)
+    return asset
 
     """ # returns the time in a list of [hours, minutes] from where the clip is in the vod
      placeInVod = \
@@ -334,7 +410,7 @@ def download_clip(
              0].split('h')"""
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     start_time = time.time()
     getclips("zubatlel")
     print("--- %s seconds ---" % (time.time() - start_time))
