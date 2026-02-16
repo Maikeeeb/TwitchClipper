@@ -17,6 +17,7 @@ from backend import pipeline
 from backend import segment_generator
 from backend import segment_scoring
 from backend import selection
+from backend import vod_chat_pipeline
 from backend import worker
 
 
@@ -40,6 +41,9 @@ def test_backend_modules_importable() -> None:
     assert callable(segment_generator.merge_overlapping_segments)
     assert callable(segment_scoring.score_segment)
     assert callable(segment_scoring.rank_segments)
+    assert callable(vod_chat_pipeline.build_segment_contexts)
+    assert callable(vod_chat_pipeline.chat_messages_to_ranked_segments)
+    assert callable(vod_chat_pipeline.chat_file_to_ranked_segments)
     assert callable(selection.select_clips_for_duration)
     assert isinstance(pipeline.PER_STREAMER_K, int) and pipeline.PER_STREAMER_K > 0
     assert hasattr(jobs, "Job") and hasattr(jobs, "JobStatus")

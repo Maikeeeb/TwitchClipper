@@ -65,7 +65,13 @@ For product direction and phased deliverables (ranking, job queue, VOD highlight
   - No network required yet
   - Add parsing tests
 
-- [ ] TODO-VOD-006 Implement VOD downloader
+- [x] TODO-VOD-006 Build chat-to-ranked-segments pipeline (no VOD yet)
+  - Orchestrate: bucket -> detect spikes -> generate segments -> merge -> rank
+  - Build per-segment context text from nearby chat messages
+  - Support keyword bonus ranking inputs
+  - Add deterministic unit tests for context, merge, ranking, and file-path helper
+
+- [ ] TODO-VOD-007 Implement VOD downloader
   - Download full VOD mp4 to disk
   - Store path in VodAsset
   - Graceful failure handling
@@ -73,20 +79,20 @@ For product direction and phased deliverables (ranking, job queue, VOD highlight
 
 ## Phase 4 — Video Processing (Heavy I/O)
 
-- [ ] TODO-VOD-007 Cut segments from VOD using ffmpeg
+- [ ] TODO-VOD-008 Cut segments from VOD using ffmpeg
   - Input: VOD mp4 + ranked segments
   - Output: individual mp4 clips
   - Ensure no segment exceeds VOD bounds
   - Add basic integration tests with synthetic mp4
 
-- [ ] TODO-VOD-008 Compile montage from generated segments
+- [ ] TODO-VOD-009 Compile montage from generated segments
   - Reuse existing montage pipeline logic
   - Respect duration window (8–10 minutes)
   - Store final montage path in VodAsset metadata
 
 ## Phase 5 — Job Integration
 
-- [ ] TODO-VOD-009 Add vod_highlights job type
+- [ ] TODO-VOD-010 Add vod_highlights job type
   - Register handler in backend/worker.py
   - Params: vod_url (or id), output_dir, optional keywords
   - Worker should:
@@ -98,7 +104,7 @@ For product direction and phased deliverables (ranking, job queue, VOD highlight
       6) Compile montage
   - Update job.result with output paths and counts
 
-- [ ] TODO-VOD-010 Add end-to-end API test for vod_highlights job
+- [ ] TODO-VOD-011 Add end-to-end API test for vod_highlights job
   - Use fake chat data
   - Use synthetic test mp4
   - Ensure QUEUED → RUNNING → DONE flow works

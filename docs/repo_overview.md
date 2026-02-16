@@ -37,6 +37,7 @@ TwitchClipper/ - Repository root
   `backend/chat_spikes.py` (message bucketing and threshold-based spike detection),
   `backend/segment_generator.py` (spike buckets to segment windows with overlap merging),
   `backend/segment_scoring.py` (segment scoring and stable ranking with optional keyword bonuses),
+  `backend/vod_chat_pipeline.py` (orchestrates chat -> spikes -> merged/ranked segments),
   `backend/filtering.py` (clip dedupe and max-per-streamer filter),
   `backend/pipeline.py` (scrape → filter → rank → top N → download; PER_STREAMER_K for multi-streamer)
 - **Public API**: `Not implemented yet`
