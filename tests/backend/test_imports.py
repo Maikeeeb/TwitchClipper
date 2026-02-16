@@ -13,6 +13,7 @@ from backend import job_queue
 from backend import jobs
 from backend import oneVideo
 from backend import pipeline
+from backend import segment_generator
 from backend import selection
 from backend import worker
 
@@ -32,6 +33,8 @@ def test_backend_modules_importable() -> None:
     assert callable(filtering.clip_identity)
     assert callable(pipeline.scrape_filter_rank_download)
     assert pipeline.DEFAULT_MAX_CLIPS == 20
+    assert callable(segment_generator.spikes_to_segments)
+    assert callable(segment_generator.merge_overlapping_segments)
     assert callable(selection.select_clips_for_duration)
     assert isinstance(pipeline.PER_STREAMER_K, int) and pipeline.PER_STREAMER_K > 0
     assert hasattr(jobs, "Job") and hasattr(jobs, "JobStatus")

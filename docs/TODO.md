@@ -45,7 +45,7 @@ For product direction and phased deliverables (ranking, job queue, VOD highlight
   - Deterministic and offline
   - Add strong unit tests (normal, empty, edge cases)
 
-- [ ] TODO-VOD-003 Implement segment generator (spike → time window)
+- [x] TODO-VOD-003 Implement segment generator (spike → time window)
   - Convert spike timestamps into (start_s, end_s)
   - Configurable window size (e.g., ±15s around spike)
   - Merge overlapping windows
