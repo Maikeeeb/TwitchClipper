@@ -129,6 +129,95 @@ All code must pass pre-commit hooks before committing. The following standards a
 - Validate JSON/YAML syntax if creating or modifying these files
 - Test that `pre-commit run --all-files` passes before considering code complete
 
+## Git Commit Rules (Strict)
+
+Agents are allowed to create local commits, but must follow these rules exactly.
+
+### 1. When to Commit
+
+A commit may only be created when:
+
+- A single TODO or clearly defined feature is fully completed
+- All tests pass (pytest succeeds)
+- No unrelated files were modified
+- The change can be described in one short sentence
+
+Do NOT bundle multiple TODOs or multiple epics into one commit.
+
+Preferred rule:
+- 1 TODO = 1 commit
+
+If the change is very large, split into at most:
+- core implementation
+- tests + documentation
+
+Never more than 2 commits per TODO.
+
+---
+
+### 2. Commit Message Format
+
+Use short, scoped messages:
+
+Format:
+`<area>: <clear description>`
+
+Examples:
+- `jobs: add in-memory job queue`
+- `worker: implement run_next failure handling`
+- `api: add clip-montage job endpoint`
+- `vod: implement spike detector`
+- `pipeline: enforce 8–10 minute montage selection`
+
+Do NOT use:
+- "finished feature"
+- "updates"
+- "misc changes"
+- "fix stuff"
+
+Be specific and technical.
+
+---
+
+### 3. Staging Rules
+
+Before committing, agents must:
+
+- Stage only files related to the current TODO
+- Exclude unrelated modified files
+- Never commit large media files unless explicitly required
+- Never commit secrets or environment files (.env)
+
+If more than ~10 files are staged, pause and reassess.
+
+---
+
+### 4. Push Rules
+
+Agents must NOT automatically push unless explicitly instructed.
+
+Allowed:
+- Local commit creation
+
+Not allowed without explicit instruction:
+- git push
+- git push --force
+- branch deletion
+- history rewriting
+
+---
+
+### 5. Safety Checks
+
+If tests fail:
+- Do NOT commit
+
+If the working tree contains unrelated changes:
+- Do NOT commit
+
+If unsure:
+- Ask before committing
+
 ## .gitignore Management
 
 ### When to Update .gitignore

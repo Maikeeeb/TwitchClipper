@@ -26,9 +26,9 @@ For product direction and phased deliverables (ranking, job queue, VOD highlight
 - [x] TODO-JOBS-004 Add API endpoints
 - [x] TODO-JOBS-005 Add tests for job state transitions (end-to-end through API + worker).
 
-## EPIC: VOD + Chat auto highlights
+# EPIC: VOD + Chat auto highlights
 
-# Phase 1 — Data Contracts (No I/O, No Network)
+## Phase 1 — Data Contracts (No I/O, No Network)
 
 - [ ] TODO-VOD-001 Define VOD job data model (inputs, outputs, metadata structure)
   - Define VodJobParams (vod_url OR vod_id, output_dir, optional keyword list)
@@ -37,7 +37,7 @@ For product direction and phased deliverables (ranking, job queue, VOD highlight
   - No downloading yet — pure data structure only
   - Add unit tests for model validation
 
-# Phase 2 — Chat Analysis (Pure Logic, Fully Testable Offline)
+## Phase 2 — Chat Analysis (Pure Logic, Fully Testable Offline)
 
 - [ ] TODO-VOD-002 Implement chat spike detector (messages per second)
   - Input: list of (timestamp, message)
@@ -57,7 +57,7 @@ For product direction and phased deliverables (ranking, job queue, VOD highlight
   - Sort highest first
   - Add ranking unit tests
 
-# Phase 3 — Chat & VOD I/O (Still Separate from Worker)
+## Phase 3 — Chat & VOD I/O (Still Separate from Worker)
 
 - [ ] TODO-VOD-005 Implement chat log importer
   - Accept local chat JSON or raw file
@@ -71,7 +71,7 @@ For product direction and phased deliverables (ranking, job queue, VOD highlight
   - Graceful failure handling
   - Do NOT cut segments yet
 
-# Phase 4 — Video Processing (Heavy I/O)
+## Phase 4 — Video Processing (Heavy I/O)
 
 - [ ] TODO-VOD-007 Cut segments from VOD using ffmpeg
   - Input: VOD mp4 + ranked segments
@@ -84,7 +84,7 @@ For product direction and phased deliverables (ranking, job queue, VOD highlight
   - Respect duration window (8–10 minutes)
   - Store final montage path in VodAsset metadata
 
-# Phase 5 — Job Integration
+## Phase 5 — Job Integration
 
 - [ ] TODO-VOD-009 Add vod_highlights job type
   - Register handler in backend/worker.py
