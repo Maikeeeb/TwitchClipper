@@ -33,8 +33,10 @@ TwitchClipper/ - Repository root
   `backend/overlay.py`, `backend/scoring.py` (clip scoring from metadata),
   `backend/clip_models.py` (ClipRef, ClipAsset, JSON sidecar persistence),
   `backend/vod_models.py` (typed data contracts for VOD highlight jobs, chat messages, and segments),
+  `backend/chat_import.py` (local .jsonl/.json chat log importer into ChatMessage objects),
   `backend/chat_spikes.py` (message bucketing and threshold-based spike detection),
   `backend/segment_generator.py` (spike buckets to segment windows with overlap merging),
+  `backend/segment_scoring.py` (segment scoring and stable ranking with optional keyword bonuses),
   `backend/filtering.py` (clip dedupe and max-per-streamer filter),
   `backend/pipeline.py` (scrape → filter → rank → top N → download; PER_STREAMER_K for multi-streamer)
 - **Public API**: `Not implemented yet`

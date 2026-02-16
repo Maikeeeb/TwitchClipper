@@ -51,7 +51,7 @@ For product direction and phased deliverables (ranking, job queue, VOD highlight
   - Merge overlapping windows
   - Unit tests required
 
-- [ ] TODO-VOD-004 Implement segment ranking
+- [x] TODO-VOD-004 Implement segment ranking
   - Score based on spike strength (primary signal)
   - Optional keyword bonus (similar to clip scoring)
   - Sort highest first
@@ -59,7 +59,7 @@ For product direction and phased deliverables (ranking, job queue, VOD highlight
 
 ## Phase 3 — Chat & VOD I/O (Still Separate from Worker)
 
-- [ ] TODO-VOD-005 Implement chat log importer
+- [x] TODO-VOD-005 Implement chat log importer
   - Accept local chat JSON or raw file
   - Parse into structured (timestamp, message)
   - No network required yet
