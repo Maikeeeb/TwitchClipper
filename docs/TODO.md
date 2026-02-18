@@ -71,7 +71,7 @@ For product direction and phased deliverables (ranking, job queue, VOD highlight
   - Support keyword bonus ranking inputs
   - Add deterministic unit tests for context, merge, ranking, and file-path helper
 
-- [ ] TODO-VOD-007 Implement VOD downloader
+- [x] TODO-VOD-007 — VOD downloader that supports Twitch VOD page URLs (no Twitch API).
   - Download full VOD mp4 to disk
   - Store path in VodAsset
   - Graceful failure handling
@@ -79,13 +79,13 @@ For product direction and phased deliverables (ranking, job queue, VOD highlight
 
 ## Phase 4 — Video Processing (Heavy I/O)
 
-- [ ] TODO-VOD-008 Cut segments from VOD using ffmpeg
+- [x] TODO-VOD-008 Cut segments from VOD using ffmpeg
   - Input: VOD mp4 + ranked segments
   - Output: individual mp4 clips
   - Ensure no segment exceeds VOD bounds
   - Add basic integration tests with synthetic mp4
 
-- [ ] TODO-VOD-009 Compile montage from generated segments
+- [x] TODO-VOD-009 Compile montage from generated segments
   - Reuse existing montage pipeline logic
   - Respect duration window (8–10 minutes)
   - Store final montage path in VodAsset metadata

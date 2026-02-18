@@ -53,6 +53,7 @@ logs/
 # Media output and legacy artifacts
 currentVideos/
 fullVideos/
+manual_test_output/
 *.mp4
 # Test media (committed for offline tests)
 !tests/media/
