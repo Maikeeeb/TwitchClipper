@@ -113,8 +113,9 @@ def compile_vod_montage(
     ) as f:
         concat_file = f.name
         for path in selected_paths:
-            # Escape quotes and write line
-            f.write(f"file '{path}'\n")
+            # Convert backslashes to forward slashes for ffmpeg compatibility
+            normalized_path = path.replace("\\", "/")
+            f.write(f"file '{normalized_path}'\n")
 
     try:
         # Run ffmpeg concat
