@@ -37,6 +37,7 @@ project-specific configuration.
 - **Primary framework:** `None (uses Selenium + MoviePy; API planned with FastAPI)`
 - **Entry points:** `CLI: python cli/main.py; Job API: uvicorn api.app:app --reload; UI: Not implemented yet (npm run dev)`
 - **Configuration files:** `Not used`
+- **Dependency policy:** Features should not depend on official Twitch APIs that require a Twitch API key; non-official Twitch web GraphQL is allowed as best-effort.
 
 ## Development
 

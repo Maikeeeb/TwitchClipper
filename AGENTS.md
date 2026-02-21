@@ -39,6 +39,12 @@ Available agents:
 - Do not generalize a specific request into a broader redesign
 - If intent is ambiguous, ask before acting
 
+## Twitch API Dependency Policy
+
+- No new feature may rely on official Twitch APIs that require a Twitch API key (for example, Helix) to function.
+- Twitch web endpoints (for example, non-official GraphQL used by the website) are allowed when they are clearly documented as best-effort and potentially unstable.
+- If a request requires official Twitch API usage with a Twitch API key, the agent must call out the policy conflict and ask for an explicit one-off exception.
+
 ## Entry Points
 
 - **CLI:** `python cli/main.py`

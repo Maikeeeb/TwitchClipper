@@ -98,7 +98,7 @@ For product direction and phased deliverables (ranking, job queue, VOD highlight
   - Worker should:
       1) Download VOD
       2) Load/import chat
-      3) Detect spikes
+      3) Detect  spikes
       4) Generate + rank segments
       5) Cut segments
       6) Compile montage
@@ -108,6 +108,33 @@ For product direction and phased deliverables (ranking, job queue, VOD highlight
   - Use fake chat data
   - Use synthetic test mp4
   - Ensure QUEUED → RUNNING → DONE flow works
+
+- [x] TODO-VOD-012 Fetch Twitch VOD chat and save to JSONL
+  - Add new module: backend/vod_chat_fetch.py
+  - Input: vod_url (or vod_id), output_dir (or out_path), optional start_time_s, end_time_s
+  - Module should:
+      1) Resolve vod_id from a URL or accept an id directly
+      2) Fetch chat replay pages from Twitch (cursor based pagination)
+      3) Convert each message into a simple JSON object
+      4) Write to JSONL (one message per line) at: {output_dir}/{vod_id}.chat.jsonl
+      5) Return a small summary (messages_written, first_offset_s, last_offset_s, out_path)
+  - JSONL line format (required keys):
+      - vod_id, offset_s, created_at, user_name, message
+    - Optional keys if available:
+      - user_id, comment_id, badges, fragments, raw
+  - Auth rules:
+      - Use TWITCH_CLIENT_ID and TWITCH_OAUTH_TOKEN if set
+      - If missing and a real fetch is attempted, raise a clear error that says what env vars are needed
+  - Safety:
+      - Small retry on 5xx (like 2 retries), then fail with a helpful message
+      - If rate limited, stop and explain
+  - Tests (offline only):
+      - Add tests/backend/test_vod_chat_fetch.py
+      - Mock HTTP with a multi page cursor flow
+      - Test empty chat
+      - Test range filter start_time_s/end_time_s
+      - Test JSONL writer creates valid JSON per line with required keys
+      - Add a “RUN_TWITCH_INTEGRATION=1” note for any optional manual test, but keep CI offline
 
 
 ## EPIC: Database persistence

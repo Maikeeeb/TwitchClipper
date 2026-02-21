@@ -2,6 +2,12 @@
 
 This document is the hub for repo structure, entry points, and pointers to key files.
 
+## External dependency policy
+
+- Product features should not rely on official Twitch APIs that require a Twitch API key (for example, Helix).
+- Prefer local/offline inputs and reproducible artifacts for core feature behavior.
+- Twitch web endpoints (for example, non-official GraphQL) are allowed as best-effort integrations and may break.
+
 ## Repository map (folders only)
 
 ```
@@ -37,6 +43,7 @@ TwitchClipper/ - Repository root
   `backend/vod_cut.py` (ffmpeg-based segment cutting from VOD into individual clips),
   `backend/vod_montage.py` (compile segment clips into a montage with duration constraints),
   `backend/chat_import.py` (local .jsonl/.json chat log importer into ChatMessage objects),
+  `backend/vod_chat_fetch.py` (best-effort Twitch web endpoint chat fetch to normalized JSONL; not official API and may break),
   `backend/chat_spikes.py` (message bucketing and threshold-based spike detection),
   `backend/segment_generator.py` (spike buckets to segment windows with overlap merging),
   `backend/segment_scoring.py` (segment scoring and stable ranking with optional keyword bonuses),
