@@ -43,10 +43,14 @@ def spikes_to_segments(
 def merge_overlapping_segments(segments: list[Segment]) -> list[Segment]:
     """
     Merge segments that overlap or touch (next.start_s <= current.end_s).
+
+    To prevent giant windows from swallowing the timeline, merged windows are capped
+    to 120 seconds by default.
     """
     if not segments:
         return []
 
+    max_merged_duration_s = 120.0
     ordered = sorted(segments, key=lambda segment: segment.start_s)
     merged: list[Segment] = [
         Segment(
@@ -60,9 +64,20 @@ def merge_overlapping_segments(segments: list[Segment]) -> list[Segment]:
     for next_segment in ordered[1:]:
         current = merged[-1]
         if next_segment.start_s <= current.end_s:
+            merged_end = max(current.end_s, next_segment.end_s)
+            if merged_end - current.start_s > max_merged_duration_s:
+                merged.append(
+                    Segment(
+                        start_s=next_segment.start_s,
+                        end_s=next_segment.end_s,
+                        spike_score=next_segment.spike_score,
+                        keyword_score=0.0,
+                    )
+                )
+                continue
             merged[-1] = Segment(
                 start_s=current.start_s,
-                end_s=max(current.end_s, next_segment.end_s),
+                end_s=merged_end,
                 spike_score=max(current.spike_score, next_segment.spike_score),
                 keyword_score=0.0,
             )

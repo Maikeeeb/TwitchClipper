@@ -92,7 +92,7 @@ For product direction and phased deliverables (ranking, job queue, VOD highlight
 
 ## Phase 5 — Job Integration
 
-- [ ] TODO-VOD-010 Add vod_highlights job type
+- [x] TODO-VOD-010 Add vod_highlights job type
   - Register handler in backend/worker.py
   - Params: vod_url (or id), output_dir, optional keywords
   - Worker should:
@@ -104,7 +104,7 @@ For product direction and phased deliverables (ranking, job queue, VOD highlight
       6) Compile montage
   - Update job.result with output paths and counts
 
-- [ ] TODO-VOD-011 Add end-to-end API test for vod_highlights job
+- [x] TODO-VOD-011 Add end-to-end API test for vod_highlights job
   - Use fake chat data
   - Use synthetic test mp4
   - Ensure QUEUED → RUNNING → DONE flow works
@@ -168,6 +168,7 @@ For product direction and phased deliverables (ranking, job queue, VOD highlight
 - TODO-TEST-ONEVIDEO-COMPILE: Validate compile output creation and no-clip behavior.
 - TODO-TEST-OVERLAY: Validate render_overlay parameter handling and failure mode.
 - TODO-TEST-TRANSITION: Validate oneTransition output path handling and errors.
+- TODO-TEST-VOD-SMOKE: Validate full vod_highlights pipeline against live Twitch when integration is enabled.
 
 # Completed
 - Stabilized Twitch clip selectors with fallback strategies in `backend/clips.py`.

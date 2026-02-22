@@ -32,6 +32,27 @@ class ClipMontageJobRequest(BaseModel):
     per_streamer_k: Optional[int] = Field(None, ge=0)
 
 
+class VodHighlightsJobRequest(BaseModel):
+    """Request body for POST /jobs/vod-highlights."""
+
+    vod_url: str = Field(..., min_length=1, description="Twitch VOD URL or local path")
+    output_dir: str = "."
+    keywords: list[str] = Field(default_factory=list)
+    chat_path: Optional[str] = None
+    min_count: int = Field(1, ge=1)
+    spike_window_seconds: int = Field(30, gt=0)
+    segment_padding_seconds: int = Field(20, ge=0)
+    max_segment_seconds: float = Field(120, gt=0)
+    diversity_windows: int = Field(8, ge=1)
+
+
+class JobSubmitRequest(BaseModel):
+    """Generic request body for POST /jobs."""
+
+    type: str = Field(..., min_length=1, description="Job type")
+    params: dict[str, Any] = Field(default_factory=dict, description="Job params")
+
+
 class JobResponse(BaseModel):
     """Response for GET /jobs/{job_id}."""
 
@@ -107,6 +128,25 @@ def create_app(
     ) -> dict[str, str]:
         params = body.model_dump()
         job = queue.create_job("clip_montage", params)
+        queue.enqueue(job)
+        return {"job_id": job.id}
+
+    @app.post("/jobs/vod-highlights")
+    def submit_vod_highlights(
+        body: VodHighlightsJobRequest,
+        queue: InMemoryJobQueue = Depends(get_queue),
+    ) -> dict[str, str]:
+        params = body.model_dump()
+        job = queue.create_job("vod_highlights", params)
+        queue.enqueue(job)
+        return {"job_id": job.id}
+
+    @app.post("/jobs")
+    def submit_job(
+        body: JobSubmitRequest,
+        queue: InMemoryJobQueue = Depends(get_queue),
+    ) -> dict[str, str]:
+        job = queue.create_job(body.type, body.params)
         queue.enqueue(job)
         return {"job_id": job.id}
 

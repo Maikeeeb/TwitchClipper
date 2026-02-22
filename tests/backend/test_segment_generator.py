@@ -128,3 +128,19 @@ def test_merge_overlapping_segments_does_not_mutate_input() -> None:
         for segment in original
     ]
     assert after == snapshot
+
+
+def test_merge_overlapping_segments_caps_merged_duration_to_120_seconds() -> None:
+    """Overlapping chain is split when merge would exceed 120 seconds."""
+    segments = [
+        Segment(start_s=0.0, end_s=80.0, spike_score=3.0),
+        Segment(start_s=70.0, end_s=150.0, spike_score=5.0),  # would make 150s if merged
+    ]
+
+    merged = merge_overlapping_segments(segments)
+    assert len(merged) == 2
+    assert (merged[0].end_s - merged[0].start_s) <= 120.0
+    assert merged[0].start_s == pytest.approx(0.0)
+    assert merged[0].end_s == pytest.approx(80.0)
+    assert merged[1].start_s == pytest.approx(70.0)
+    assert merged[1].end_s == pytest.approx(150.0)

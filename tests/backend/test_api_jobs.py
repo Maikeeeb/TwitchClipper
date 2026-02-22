@@ -1,8 +1,8 @@
 """
 Test Plan
-- Partitions: submit success, get found/not found, run_next empty vs one job
-- Boundaries: empty streamer_names rejected by validation; unknown job_id → 404
-- Failure modes: run_next with fake handler → DONE; no handler → FAILED (not exercised here)
+- Partitions: submit success for clip/vod jobs, get found/not found, run_next empty vs one job
+- Boundaries: empty streamer_names rejected; missing vod_url rejected; unknown job_id -> 404
+- Failure modes: run_next with fake handler -> DONE; no handler -> FAILED (not exercised here)
 
 Covers: TODO-JOBS-004
 """
@@ -133,6 +133,63 @@ def test_submit_rejects_empty_streamer_names(client: TestClient) -> None:
         json={"streamer_names": []},
     )
     assert resp.status_code == 422
+
+
+def test_submit_vod_highlights_returns_job_id_and_queues_job() -> None:
+    """Validation: POST /jobs/vod-highlights enqueues a vod_highlights job."""
+    app = create_app(handlers={"vod_highlights": lambda job: {"ok": True}})
+    app.dependency_overrides[get_now] = _fixed_now
+    client = TestClient(app)
+    resp = client.post(
+        "/jobs/vod-highlights",
+        json={
+            "vod_url": "https://www.twitch.tv/videos/123",
+            "output_dir": ".",
+            "keywords": ["wow"],
+        },
+    )
+    assert resp.status_code == 200
+    job_id = resp.json()["job_id"]
+
+    queued = client.get(f"/jobs/{job_id}")
+    assert queued.status_code == 200
+    payload = queued.json()
+    assert payload["type"] == "vod_highlights"
+    assert payload["status"] == "queued"
+    assert payload["params"]["vod_url"] == "https://www.twitch.tv/videos/123"
+    assert payload["params"]["keywords"] == ["wow"]
+
+
+def test_submit_vod_highlights_rejects_missing_vod_url() -> None:
+    """Defect: POST /jobs/vod-highlights requires vod_url."""
+    app = create_app(handlers={"vod_highlights": lambda job: {"ok": True}})
+    app.dependency_overrides[get_now] = _fixed_now
+    client = TestClient(app)
+    resp = client.post("/jobs/vod-highlights", json={"output_dir": "."})
+    assert resp.status_code == 422
+
+
+def test_run_next_processes_vod_highlights_job_with_fake_handler() -> None:
+    """Validation: queued vod_highlights job transitions to done via /jobs/run-next."""
+    app = create_app(handlers={"vod_highlights": lambda job: {"montage_path": "/tmp/m.mp4"}})
+    app.dependency_overrides[get_now] = _fixed_now
+    client = TestClient(app)
+    submit = client.post(
+        "/jobs/vod-highlights",
+        json={"vod_url": "https://www.twitch.tv/videos/123"},
+    )
+    assert submit.status_code == 200
+    job_id = submit.json()["job_id"]
+
+    run_resp = client.post("/jobs/run-next")
+    assert run_resp.status_code == 200
+    assert run_resp.json()["processed"] == 1
+    assert run_resp.json()["status"] == "done"
+
+    done = client.get(f"/jobs/{job_id}")
+    assert done.status_code == 200
+    assert done.json()["status"] == "done"
+    assert done.json()["result"]["montage_path"] == "/tmp/m.mp4"
 
 
 def test_health_returns_ok(client: TestClient) -> None:

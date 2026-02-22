@@ -233,6 +233,23 @@ def _has_integrity_error(payload: dict[str, Any]) -> bool:
     return False
 
 
+def _has_transient_graphql_error(payload: dict[str, Any]) -> bool:
+    """Return True for retryable GraphQL errors (for example, service timeout)."""
+    errors = payload.get("errors")
+    if not isinstance(errors, list):
+        return False
+    for error in errors:
+        if not isinstance(error, dict):
+            continue
+        message = error.get("message")
+        if not isinstance(message, str):
+            continue
+        lower = message.lower()
+        if "service timeout" in lower or "timed out" in lower:
+            return True
+    return False
+
+
 def _raise_graphql_error(payload: dict[str, Any]) -> None:
     errors = payload.get("errors")
     if not isinstance(errors, list) or not errors:
@@ -325,12 +342,12 @@ def fetch_vod_chat_messages_web(
     start_offset_s: float | None = None,
     end_offset_s: float | None = None,
     page_size: int = 50,
-    max_pages: int = 10_000,
+    max_pages: int | None = None,
 ) -> Iterable[dict[str, Any]]:
     """Fetch and yield normalized VOD chat messages from Twitch web GraphQL."""
     if page_size < 1 or page_size > 100:
         raise ValueError("page_size must be between 1 and 100")
-    if max_pages < 1:
+    if max_pages is not None and max_pages < 1:
         raise ValueError("max_pages must be >= 1")
     if start_offset_s is not None and start_offset_s < 0:
         raise ValueError("start_offset_s must be >= 0")
@@ -349,7 +366,10 @@ def fetch_vod_chat_messages_web(
     current_offset = start_value
     use_cursor = True
 
-    for _ in range(max_pages):
+    pages_fetched = 0
+    while True:
+        if max_pages is not None and pages_fetched >= max_pages:
+            break
         payload = build_gql_payload(
             vod_id,
             cursor=cursor if use_cursor and cursor is not None else None,
@@ -358,7 +378,31 @@ def fetch_vod_chat_messages_web(
             ),
             page_size=page_size,
         )
-        gql_payload = _post_gql_with_retries(session=active_session, payload=payload)
+        gql_payload: dict[str, Any] | None = None
+        page_error: TwitchWebChatError | None = None
+        for page_attempt in range(4):
+            candidate = _post_gql_with_retries(session=active_session, payload=payload)
+            if "errors" not in candidate:
+                gql_payload = candidate
+                break
+            if use_cursor and cursor is not None and _has_integrity_error(candidate):
+                gql_payload = candidate
+                break
+            if _has_transient_graphql_error(candidate) and page_attempt < 3:
+                time.sleep(0.25 * (page_attempt + 1))
+                continue
+            page_error = TwitchWebChatError(
+                "Twitch web chat endpoint returned GraphQL errors. "
+                "If payload format changed, update build_gql_payload()."
+            )
+            gql_payload = candidate
+            break
+
+        if gql_payload is None:
+            if page_error is not None:
+                raise page_error
+            raise TwitchWebChatError("Unexpected empty GraphQL payload during page retry loop.")
+
         if "errors" in gql_payload:
             if use_cursor and cursor is not None and _has_integrity_error(gql_payload):
                 use_cursor = False
@@ -398,10 +442,12 @@ def fetch_vod_chat_messages_web(
         if use_cursor and last_cursor:
             cursor = last_cursor
             current_offset = next_offset
+            pages_fetched += 1
             continue
 
         use_cursor = False
         current_offset = next_offset
+        pages_fetched += 1
 
 
 def write_chat_jsonl(messages: Iterable[dict[str, Any]], out_path: Path) -> dict[str, Any]:
@@ -442,7 +488,7 @@ def fetch_vod_chat_to_jsonl(
     start_offset_s: float | None = None,
     end_offset_s: float | None = None,
     page_size: int = 50,
-    max_pages: int = 10_000,
+    max_pages: int | None = None,
 ) -> dict[str, Any]:
     """Resolve VOD id, fetch Twitch web chat replay, and write normalized JSONL."""
     vod_id = resolve_vod_id(vod_url_or_id)
@@ -466,7 +512,12 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--start-offset-s", type=float, default=None)
     parser.add_argument("--end-offset-s", type=float, default=None)
     parser.add_argument("--page-size", type=int, default=50)
-    parser.add_argument("--max-pages", type=int, default=10_000)
+    parser.add_argument(
+        "--max-pages",
+        type=int,
+        default=None,
+        help="Optional page cap (default: unlimited).",
+    )
     return parser
 
 

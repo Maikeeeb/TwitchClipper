@@ -1,7 +1,7 @@
 """
 Test Plan
-- Partitions: happy path multi-page cursor flow, empty chat, range-filtered subset, JSONL write
-- Boundaries: end_offset_s stopping behavior, required JSONL keys presence
+- Partitions: happy path multi-page cursor flow, unbounded paging, empty chat, range-filtered subset, JSONL write
+- Boundaries: end_offset_s stopping behavior, max_pages validation, required JSONL keys presence
 - Failure modes: non-Twitch/non-id input validation and deterministic no-network behavior via mocks
 """
 
@@ -126,6 +126,66 @@ def test_fetch_vod_chat_messages_web_multi_page_cursor(monkeypatch: pytest.Monke
     assert recorded_payloads[1]["variables"]["cursor"] == "cursor-2"
 
 
+def test_fetch_vod_chat_messages_web_supports_unbounded_paging_none(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Covers: TODO-VOD-012
+    responses = [
+        _FakeResponse(
+            200,
+            _comments_payload([_edge("cursor-1", "c1", 1.0, "Alpha", "first")], has_next_page=True),
+        ),
+        _FakeResponse(
+            200,
+            _comments_payload([_edge("cursor-2", "c2", 2.0, "Beta", "second")], has_next_page=False),
+        ),
+    ]
+
+    def _fake_post(
+        self: requests.Session,
+        url: str,
+        headers: dict[str, str],
+        json: dict[str, Any],
+        timeout: int,
+    ) -> _FakeResponse:
+        return responses.pop(0)
+
+    monkeypatch.setattr(requests.Session, "post", _fake_post)
+    messages = list(fetch_vod_chat_messages_web("2699448530", page_size=1, max_pages=None))
+    assert [msg["message"] for msg in messages] == ["first", "second"]
+
+
+def test_fetch_vod_chat_messages_web_retries_transient_graphql_service_timeout(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Covers: TODO-VOD-012
+    transient_error = {
+        "errors": [{"message": "service timeout"}],
+        "data": {"video": {"comments": {"edges": [], "pageInfo": {"hasNextPage": True}}}},
+    }
+    stable_page = _comments_payload(
+        [_edge("cursor-1", "c1", 1.0, "Alpha", "first")],
+        has_next_page=False,
+    )
+    responses = [
+        _FakeResponse(200, transient_error),
+        _FakeResponse(200, stable_page),
+    ]
+
+    def _fake_post(
+        self: requests.Session,
+        url: str,
+        headers: dict[str, str],
+        json: dict[str, Any],
+        timeout: int,
+    ) -> _FakeResponse:
+        return responses.pop(0)
+
+    monkeypatch.setattr(requests.Session, "post", _fake_post)
+    messages = list(fetch_vod_chat_messages_web("2699448530", page_size=1, max_pages=None))
+    assert [msg["message"] for msg in messages] == ["first"]
+
+
 def test_fetch_vod_chat_messages_web_empty_result(monkeypatch: pytest.MonkeyPatch) -> None:
     # Covers: TODO-VOD-012
     def _fake_post(
@@ -240,3 +300,9 @@ def test_fetch_vod_chat_to_jsonl_orchestrates_fetch_and_write(
     assert summary["vod_id"] == "2699448530"
     assert summary["messages_written"] == 1
     assert output.exists()
+
+
+def test_fetch_vod_chat_messages_web_rejects_invalid_max_pages() -> None:
+    # Covers: TODO-VOD-012
+    with pytest.raises(ValueError, match="max_pages must be >= 1"):
+        list(fetch_vod_chat_messages_web("2699448530", max_pages=0))

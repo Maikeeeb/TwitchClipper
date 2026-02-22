@@ -1,7 +1,7 @@
 """
 Test Plan
-- Partitions: exact fit, early stop at min, skip exceeds max, best under max
-- Boundaries: empty list, all duration_s=None
+- Partitions: exact fit, early stop at min, skip exceeds max, best under max, overlap skip, window diversity
+- Boundaries: empty list, all duration_s=None, >120s hard invalid segment cap
 - Failure modes: input not mutated
 """
 
@@ -13,8 +13,10 @@ from backend.clip_models import ClipAsset, ClipRef
 from backend.selection import (
     MAX_MONTAGE_SECONDS,
     MIN_MONTAGE_SECONDS,
+    select_non_overlapping_segments_for_duration,
     select_clips_for_duration,
 )
+from backend.vod_models import Segment
 
 # Covers: TODO-SELECT-001
 
@@ -184,6 +186,89 @@ def test_default_constants() -> None:
     """MIN and MAX constants are 8 and 10 minutes."""
     assert MIN_MONTAGE_SECONDS == 8 * 60
     assert MAX_MONTAGE_SECONDS == 10 * 60
+
+
+def test_non_overlapping_selector_rejects_overlap_and_keeps_greedy_order() -> None:
+    """Defect+validation: overlapping candidates are skipped, preserving ranked pick order."""
+    ranked = [
+        Segment(start_s=10.0, end_s=40.0, spike_score=100.0),  # pick
+        Segment(start_s=20.0, end_s=60.0, spike_score=90.0),  # overlap -> skip
+        Segment(start_s=60.0, end_s=110.0, spike_score=80.0),  # pick
+        Segment(start_s=35.0, end_s=50.0, spike_score=70.0),  # overlap -> skip
+        Segment(start_s=120.0, end_s=170.0, spike_score=60.0),  # pick
+    ]
+
+    selected = select_non_overlapping_segments_for_duration(
+        ranked,
+        min_seconds=120,
+        max_seconds=300,
+    )
+
+    assert [(segment.start_s, segment.end_s) for segment in selected] == [
+        (10.0, 40.0),
+        (60.0, 110.0),
+        (120.0, 170.0),
+    ]
+
+
+def test_non_overlapping_selector_stops_when_duration_target_hit() -> None:
+    """Boundary: stop once selected duration reaches minimum target window."""
+    ranked = [
+        Segment(start_s=0.0, end_s=100.0, spike_score=100.0),
+        Segment(start_s=120.0, end_s=220.0, spike_score=90.0),
+        Segment(start_s=240.0, end_s=340.0, spike_score=80.0),
+        Segment(start_s=360.0, end_s=460.0, spike_score=70.0),
+    ]
+
+    selected = select_non_overlapping_segments_for_duration(
+        ranked,
+        min_seconds=250,
+        max_seconds=600,
+    )
+
+    assert len(selected) == 3
+    assert sum(segment.end_s - segment.start_s for segment in selected) == pytest.approx(300.0)
+
+
+def test_non_overlapping_selector_discards_segments_over_120_seconds() -> None:
+    """Boundary: segments longer than 120 seconds are invalid and discarded."""
+    ranked = [
+        Segment(start_s=100.0, end_s=260.0, spike_score=100.0),  # 160s -> invalid
+        Segment(start_s=300.0, end_s=390.0, spike_score=90.0),  # 90s -> valid
+    ]
+
+    selected = select_non_overlapping_segments_for_duration(
+        ranked,
+        min_seconds=60,
+        max_seconds=600,
+    )
+
+    assert len(selected) == 1
+    assert selected[0].start_s == pytest.approx(300.0)
+    assert selected[0].end_s == pytest.approx(390.0)
+    assert (selected[0].end_s - selected[0].start_s) == pytest.approx(90.0)
+
+
+def test_non_overlapping_selector_prefers_timeline_diversity_windows() -> None:
+    """Validation: first pass favors one segment per window before duplicates."""
+    ranked = [
+        Segment(start_s=0.0, end_s=80.0, spike_score=100.0),
+        Segment(start_s=85.0, end_s=165.0, spike_score=95.0),  # same early window band
+        Segment(start_s=900.0, end_s=980.0, spike_score=90.0),  # distant window
+    ]
+
+    selected = select_non_overlapping_segments_for_duration(
+        ranked,
+        min_seconds=150,
+        max_seconds=600,
+        diversity_windows=4,
+    )
+
+    # 0-80 and 900-980 should be picked before 85-165.
+    assert [(segment.start_s, segment.end_s) for segment in selected] == [
+        (0.0, 80.0),
+        (900.0, 980.0),
+    ]
 
 
 @pytest.mark.skipif(
