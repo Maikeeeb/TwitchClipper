@@ -11,7 +11,7 @@ from unittest import mock
 import pytest
 
 from backend.vod_cut import cut_segments, ffmpeg_available
-from backend.vod_models import Segment
+from backend.models.vod import Segment
 
 
 # Covers: TODO-VOD-008

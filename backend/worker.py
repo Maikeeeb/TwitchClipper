@@ -13,7 +13,7 @@ from typing import Callable
 
 from backend.db.repo import SQLiteJobRepository
 from backend.job_queue import InMemoryJobQueue
-from backend.jobs import Job, JobStatus
+from backend.models.jobs import Job, JobStatus
 
 # Handler for a job type: receives Job, returns result dict.
 JobHandler = Callable[[Job], dict]
@@ -69,7 +69,7 @@ def _default_vod_highlights_handler(job: Job) -> dict:
     from backend.vod_chat_pipeline import chat_file_to_ranked_segments
     from backend.vod_cut import cut_segments
     from backend.vod_download import download_vod
-    from backend.vod_models import VodJobParams
+    from backend.models.vod import VodJobParams
     from backend.vod_montage import compile_vod_montage
     from backend.selection import select_non_overlapping_segments_for_duration
 

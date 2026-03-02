@@ -9,7 +9,7 @@ from typing import Any, Iterable
 
 from backend.db.models import OutputRecord
 from backend.db.sqlite import connect_and_initialize
-from backend.jobs import Job, JobStatus
+from backend.models.jobs import Job, JobStatus
 
 _VALID_STATUSES = {status.value for status in JobStatus}
 _MAX_ERROR_LEN = 2048

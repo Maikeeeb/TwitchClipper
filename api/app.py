@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field
 
 from backend.db.repo import SQLiteJobRepository
 from backend.job_queue import InMemoryJobQueue
-from backend.jobs import Job
+from backend.models.jobs import Job
 from backend.worker import Worker, default_handlers
 
 

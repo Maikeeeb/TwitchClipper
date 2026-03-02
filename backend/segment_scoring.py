@@ -4,7 +4,13 @@ Pure scoring and ranking logic for VOD segments.
 
 from __future__ import annotations
 
-from backend.vod_models import Segment
+from backend.models.vod import Segment
+from backend.scoring_common import (
+    KeywordScoreConfig,
+    compute_keyword_bonus,
+    rank_by_keys,
+    validate_non_negative_keyword_params,
+)
 
 
 def score_segment(
@@ -18,20 +24,18 @@ def score_segment(
     """
     Score a segment from spike strength plus optional capped keyword bonus.
     """
-    if keyword_bonus < 0:
-        raise ValueError("keyword_bonus must be >= 0")
-    if keyword_cap < 0:
-        raise ValueError("keyword_cap must be >= 0")
+    validate_non_negative_keyword_params(keyword_bonus, keyword_cap)
 
-    bonus = 0.0
-    if context_text is not None and keywords:
-        haystack = context_text.lower()
-        for keyword in keywords:
-            if keyword and keyword.lower() in haystack:
-                bonus += keyword_bonus
-                if bonus >= keyword_cap:
-                    bonus = keyword_cap
-                    break
+    bonus = compute_keyword_bonus(
+        context_text,
+        KeywordScoreConfig(
+            keywords=keywords,
+            keyword_bonus=keyword_bonus,
+            keyword_cap=keyword_cap,
+        ),
+        # Keep segment behavior: ignore empty keyword entries.
+        skip_empty_keywords=True,
+    )
 
     return segment.spike_score + bonus
 
@@ -47,10 +51,7 @@ def rank_segments(
     """
     Return a new list ranked by total segment score descending.
     """
-    if keyword_bonus < 0:
-        raise ValueError("keyword_bonus must be >= 0")
-    if keyword_cap < 0:
-        raise ValueError("keyword_cap must be >= 0")
+    validate_non_negative_keyword_params(keyword_bonus, keyword_cap)
 
     contexts = contexts or {}
 
@@ -66,8 +67,8 @@ def rank_segments(
         )
         scored.append((total, index, segment))
 
-    ranked = sorted(
+    ranked = rank_by_keys(
         scored,
-        key=lambda item: (-item[0], -item[2].spike_score, item[2].start_s, item[2].end_s, item[1]),
+        lambda item: (-item[0], -item[2].spike_score, item[2].start_s, item[2].end_s, item[1]),
     )
     return [item[2] for item in ranked]

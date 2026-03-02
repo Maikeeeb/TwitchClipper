@@ -9,14 +9,14 @@ from pathlib import Path
 
 import pytest
 
-from backend.clip_models import ClipAsset, ClipRef
+from backend.models.clips import ClipAsset, ClipRef
 from backend.selection import (
     MAX_MONTAGE_SECONDS,
     MIN_MONTAGE_SECONDS,
     select_non_overlapping_segments_for_duration,
     select_clips_for_duration,
 )
-from backend.vod_models import Segment
+from backend.models.vod import Segment
 
 # Covers: TODO-SELECT-001
 

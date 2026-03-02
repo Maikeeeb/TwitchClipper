@@ -15,7 +15,7 @@ from fastapi.testclient import TestClient
 
 from api.app import create_app, get_now
 from backend.db.repo import SQLiteJobRepository
-from backend.jobs import JobStatus
+from backend.models.jobs import JobStatus
 
 
 def _fixed_now() -> datetime:

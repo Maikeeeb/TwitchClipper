@@ -22,7 +22,7 @@ from backend.vod_chat_fetch import fetch_vod_chat_to_jsonl
 from backend.vod_chat_pipeline import chat_file_to_ranked_segments
 from backend.vod_cut import cut_segments, ffmpeg_available
 from backend.vod_download import download_vod
-from backend.vod_models import Segment
+from backend.models.vod import Segment
 from backend.vod_montage import VideoFileClip, compile_vod_montage
 
 DEFAULT_VOD_URL = "https://www.twitch.tv/videos/2699448530"

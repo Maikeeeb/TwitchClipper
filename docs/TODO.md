@@ -7,8 +7,8 @@ For product direction and phased deliverables (ranking, job queue, VOD highlight
 > Rule: Only work on ONE ticket at a time. Do not implement multiple TODO-* items in a single change.
 
 ## EPIC: Architecture foundations
-- [ ] TODO-ARCH-001 Define shared data models for Clip, Segment, Job
-- [ ] TODO-ARCH-002 Define scoring interface (so clip and segment scoring share logic)
+- [x] TODO-ARCH-001 Define shared data models for Clip, Segment, Job
+- [x] TODO-ARCH-002 Define scoring interface (so clip and segment scoring share logic)
 
 ## EPIC: Clip filtering and ranking (works for current clips)
 - [x] TODO-RANK-001 Define a clip scoring model (views, recency, length, simple bonuses)

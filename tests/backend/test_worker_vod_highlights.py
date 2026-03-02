@@ -14,8 +14,8 @@ from typing import Any
 
 import pytest
 
-from backend.jobs import Job
-from backend.vod_models import Segment
+from backend.models.jobs import Job
+from backend.models.vod import Segment
 from backend.worker import _default_vod_highlights_handler, default_handlers
 
 

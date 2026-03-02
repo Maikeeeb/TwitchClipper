@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from backend.clip_models import ClipRef
+from backend.models.clips import ClipRef
 from backend.clips import download_clip, getclips
 
 

@@ -10,7 +10,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from backend.clip_models import ClipAsset, ClipRef, read_clip_metadata, write_clip_metadata
+from backend.clip_models import read_clip_metadata, write_clip_metadata
+from backend.models.clips import ClipAsset, ClipRef
 from backend.clips import fill_duration
 
 # Covers: TODO-DUR-001

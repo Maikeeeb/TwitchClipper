@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 import pytest
 
 from backend.db.repo import SQLiteJobRepository
-from backend.jobs import Job, JobStatus
+from backend.models.jobs import Job, JobStatus
 
 
 def _fixed_dt(hour: int) -> datetime:

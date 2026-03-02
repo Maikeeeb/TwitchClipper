@@ -17,7 +17,7 @@ from backend.vod_chat_pipeline import (
     chat_file_to_ranked_segments,
     chat_messages_to_ranked_segments,
 )
-from backend.vod_models import ChatMessage, Segment
+from backend.models.vod import ChatMessage, Segment
 
 
 def test_build_segment_contexts_matches_messages_in_window() -> None:

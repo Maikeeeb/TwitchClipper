@@ -68,6 +68,10 @@ MontageCompiler --> OutputArtifacts
 
 ## Ranking Details
 
+Segment and clip scoring wrappers now share small common primitives in
+`backend/scoring_common.py` (keyword bonus/cap and deterministic key-based ranking),
+while wrapper-specific tie-break and validation rules stay in their own modules.
+
 Current segment scoring (see `backend/segment_scoring.py`):
 
 ```text
@@ -88,6 +92,8 @@ Sort order is deterministic:
 ## Module Boundaries
 
 - `api/` handles request validation and job endpoints.
+- `backend/models/` is the stable shared model import surface for Clip/Segment/Job types.
+- Note: `backend/models/*` is a stable import surface only; canonical model definitions still live in `backend/clip_models.py`, `backend/vod_models.py`, and `backend/jobs.py`.
 - `backend/job_queue.py` owns in-memory queue behavior.
 - `backend/worker.py` orchestrates job handlers and status updates.
 - `backend/db/` optionally persists jobs and outputs to SQLite when DB is enabled.

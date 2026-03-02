@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from backend.jobs import Job, JobStatus
+from backend.models.jobs import Job, JobStatus
 
 
 def test_job_defaults_are_queued_and_has_uuid() -> None:

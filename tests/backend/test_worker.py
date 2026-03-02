@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 import pytest
 
 from backend.job_queue import InMemoryJobQueue
-from backend.jobs import JobStatus
+from backend.models.jobs import JobStatus
 from backend.worker import Worker
 
 

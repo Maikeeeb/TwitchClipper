@@ -11,7 +11,8 @@ import math
 from datetime import datetime
 from typing import Optional
 
-from backend.clip_models import ClipRef
+from backend.models.clips import ClipRef
+from backend.scoring_common import KeywordScoreConfig, compute_keyword_bonus, rank_by_keys
 
 
 def score_clip(
@@ -46,12 +47,16 @@ def score_clip(
 
     # Title keyword bonus (capped)
     if ref.title and keywords:
-        title_lower = ref.title.lower()
-        bonus = 0.0
-        for kw in keywords:
-            if kw.lower() in title_lower:
-                bonus += keyword_bonus
-        score += min(bonus, keyword_cap)
+        score += compute_keyword_bonus(
+            ref.title,
+            KeywordScoreConfig(
+                keywords=keywords,
+                keyword_bonus=keyword_bonus,
+                keyword_cap=keyword_cap,
+            ),
+            # Keep clip path behavior permissive: empty keywords are not filtered.
+            skip_empty_keywords=False,
+        )
 
     return score
 
@@ -75,4 +80,4 @@ def rank_clips(
         views = ref.views if ref.views is not None else 0
         return (-s, -max(0, views), ref.clip_url)
 
-    return sorted(clips.copy(), key=_sort_key)
+    return rank_by_keys(clips.copy(), _sort_key)

@@ -9,8 +9,10 @@ from datetime import datetime, timezone
 
 import pytest
 
-from backend.clip_models import ClipRef
+from backend.models.clips import ClipRef
+from backend.models.vod import Segment
 from backend.scoring import rank_clips, score_clip
+from backend.segment_scoring import score_segment
 
 # Fixed now for deterministic tests
 FIXED_NOW = datetime(2025, 2, 14, 12, 0, 0, tzinfo=timezone.utc)
@@ -140,6 +142,14 @@ def test_rank_clips_tie_break_higher_views_first() -> None:
     assert result[1].views == 100
 
 
+def test_rank_clips_tie_break_same_score_and_views_uses_url() -> None:
+    """Exact ties in score/views are ordered by clip_url."""
+    a = ClipRef(clip_url="https://x/a", views=1000, title=None)
+    b = ClipRef(clip_url="https://x/b", views=1000, title=None)
+    result = rank_clips([b, a], now=FIXED_NOW)
+    assert [r.clip_url for r in result] == ["https://x/a", "https://x/b"]
+
+
 def test_rank_clips_does_not_mutate_input() -> None:
     """Input list is not mutated."""
     a = ClipRef(clip_url="https://x/a", views=100, title=None)
@@ -169,3 +179,27 @@ def test_rank_clips_missing_views_title_safe() -> None:
     # c has highest (views + keyword), b middle, a lowest
     assert result[0].clip_url == "https://x/c"
     assert result[2].clip_url == "https://x/a"
+
+
+def test_keyword_bonus_parity_between_clip_and_segment_paths() -> None:
+    """Shared keyword-bonus math is consistent across both wrappers."""
+    keywords = ["pog", "wow"]
+    text = "POG wow moment"
+    clip = ClipRef(clip_url="https://x/clip", views=0, title=text)
+    segment = Segment(start_s=0.0, end_s=5.0, spike_score=0.0)
+
+    clip_bonus = score_clip(
+        clip,
+        now=FIXED_NOW,
+        keywords=keywords,
+        keyword_bonus=2.5,
+        keyword_cap=10.0,
+    )
+    segment_bonus = score_segment(
+        segment,
+        context_text=text,
+        keywords=keywords,
+        keyword_bonus=2.5,
+        keyword_cap=10.0,
+    )
+    assert clip_bonus == pytest.approx(segment_bonus)

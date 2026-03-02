@@ -8,7 +8,7 @@ Covers: TODO-JOBS-002
 """
 
 from backend.job_queue import InMemoryJobQueue
-from backend.jobs import Job, JobStatus
+from backend.models.jobs import Job, JobStatus
 
 
 def test_create_job_stores_job_and_defaults_queued() -> None:

@@ -15,7 +15,7 @@ import pytest
 
 from backend.db.models import OutputRecord
 from backend.db.repo import SQLiteJobRepository
-from backend.jobs import Job, JobStatus
+from backend.models.jobs import Job, JobStatus
 
 
 def test_initialize_schema_is_idempotent(tmp_path) -> None:

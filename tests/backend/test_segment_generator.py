@@ -10,7 +10,7 @@ Covers: TODO-VOD-003
 import pytest
 
 from backend.segment_generator import merge_overlapping_segments, spikes_to_segments
-from backend.vod_models import Segment
+from backend.models.vod import Segment
 
 
 def test_spikes_to_segments_empty_returns_empty() -> None:

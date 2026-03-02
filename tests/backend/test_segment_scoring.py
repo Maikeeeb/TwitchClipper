@@ -7,10 +7,16 @@ Test Plan
 Covers: TODO-VOD-004
 """
 
+from datetime import datetime, timezone
+
 import pytest
 
+from backend.models.clips import ClipRef
+from backend.models.vod import Segment
+from backend.scoring import score_clip
 from backend.segment_scoring import rank_segments, score_segment
-from backend.vod_models import Segment
+
+FIXED_NOW = datetime(2025, 2, 14, 12, 0, 0, tzinfo=timezone.utc)
 
 
 def test_score_segment_base_is_spike_score() -> None:
@@ -95,6 +101,14 @@ def test_rank_segments_tie_break_start_time() -> None:
     assert ranked == [earlier, same_start_longer, later]
 
 
+def test_rank_segments_final_tie_break_preserves_input_index() -> None:
+    """If all tie keys match, original input index is the final tie-break."""
+    first = Segment(start_s=5.0, end_s=15.0, spike_score=3.0)
+    second = Segment(start_s=5.0, end_s=15.0, spike_score=3.0)
+    ranked = rank_segments([second, first])
+    assert ranked == [second, first]
+
+
 def test_rank_segments_does_not_mutate_input() -> None:
     """Input list order stays unchanged after ranking call."""
     segments = [
@@ -129,3 +143,39 @@ def test_rank_segments_missing_context_index_safe() -> None:
     ]
     ranked = rank_segments(segments, contexts={99: "pog"}, keywords=["pog"])
     assert ranked == [segments[0], segments[1]]
+
+
+def test_keyword_bonus_cap_parity_between_clip_and_segment_paths() -> None:
+    """Keyword cap behavior matches in clip and segment scoring wrappers."""
+    keywords = ["a", "b", "c", "d"]
+    text = "a b c d"
+    clip = ClipRef(clip_url="https://x/cap", views=0, title=text)
+    segment = Segment(start_s=0.0, end_s=5.0, spike_score=0.0)
+
+    clip_score = score_clip(
+        clip,
+        now=FIXED_NOW,
+        keywords=keywords,
+        keyword_bonus=10.0,
+        keyword_cap=15.0,
+    )
+    segment_score = score_segment(
+        segment,
+        context_text=text,
+        keywords=keywords,
+        keyword_bonus=10.0,
+        keyword_cap=15.0,
+    )
+    assert clip_score == pytest.approx(15.0)
+    assert segment_score == pytest.approx(15.0)
+
+
+def test_keyword_bonus_case_insensitive_parity_between_paths() -> None:
+    """Case-insensitive matching is consistent between clip and segment wrappers."""
+    text = "LoL insane play"
+    clip = ClipRef(clip_url="https://x/case", views=0, title=text)
+    segment = Segment(start_s=0.0, end_s=5.0, spike_score=0.0)
+
+    clip_score = score_clip(clip, now=FIXED_NOW, keywords=["lol"])
+    segment_score = score_segment(segment, context_text=text, keywords=["lol"])
+    assert clip_score == pytest.approx(segment_score)

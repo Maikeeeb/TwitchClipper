@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 
 from backend.db.repo import SQLiteJobRepository
 from backend.job_queue import InMemoryJobQueue
-from backend.jobs import JobStatus
+from backend.models.jobs import JobStatus
 from backend.worker import Worker
 
 

@@ -7,7 +7,7 @@ Test Plan
 
 import pytest
 
-from backend.clip_models import ClipRef
+from backend.models.clips import ClipRef
 from backend.filtering import clip_identity, filter_clips, normalize_clip_url
 
 

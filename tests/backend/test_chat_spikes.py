@@ -10,7 +10,7 @@ Covers: TODO-VOD-002
 import pytest
 
 from backend.chat_spikes import bucket_chat_messages, detect_spikes
-from backend.vod_models import ChatMessage
+from backend.models.vod import ChatMessage
 
 
 def _unsafe_chat_message(timestamp_s: float, message: str) -> ChatMessage:

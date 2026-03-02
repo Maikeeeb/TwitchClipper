@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from backend.clip_models import ClipAsset, ClipRef
+from backend.models.clips import ClipAsset, ClipRef
 from backend.pipeline import (
     DEFAULT_MAX_CLIPS,
     PER_STREAMER_K,
