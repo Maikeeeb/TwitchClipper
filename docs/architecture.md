@@ -1,41 +1,102 @@
-# Architecture overview (template)
+# Architecture Overview
 
-Use this document to describe how the system is structured. Keep it concise and
-current; update it when major decisions change.
+This document describes the current VOD highlight pipeline used by TwitchClipper.
 
-## Data flow
+## System Flow
 
-### Current (clip based)
-Inputs are Twitch streamer names listed in the CLI. The backend uses Selenium to discover
-recent clips; clips are filtered (deduplicated), ranked by score (views, keywords), and the
-top N (default 20) are downloaded. MoviePy assembles clip segments into compiled outputs.
-Outputs are stored locally as downloaded clip assets, compiled highlight videos, and metadata
-files (time stamps and streamer links).
+```mermaid
+flowchart TD
+    UserClient["CLI_or_API_Client"] --> JobApi["FastAPI_JobAPI"]
+    JobApi --> JobQueue["InMemoryJobQueue"]
+    JobQueue --> Worker["Worker_run_next"]
+    Worker --> VodDownloader["VODDownloader"]
+    Worker --> ChatFetcher["ChatFetcher_or_LocalImport"]
+    Worker --> SpikeDetector["ChatSpikeDetector"]
+    Worker --> SegmentGenerator["SegmentGenerator"]
+    Worker --> SegmentRanking["SegmentRanking"]
+    Worker --> SegmentSelector["DurationAwareSegmentSelector"]
+    Worker --> SegmentCutter["ffmpegSegmentCutter"]
+    Worker --> MontageCompiler["MontageCompiler"]
+    MontageCompiler --> OutputArtifacts["vod_mp4_chat_jsonl_clips_montage"]
+```
 
-### Planned (vod + chat based)
-Inputs will include a VOD reference (url or id) plus chat log data for the same time range.
-The system will:
-1) download the vod video
-2) fetch or import the chat log
-3) detect "high points" using chat volume spikes (messages per second)
-4) generate candidate segments (time windows around spikes)
-5) rank and filter segments
-6) cut segments from the vod and compile a montage
-Outputs include compiled highlight videos plus metadata about why each segment was chosen.
+PlantUML version:
 
-## Module boundaries
+```plantuml
+@startuml
+actor UserClient
+rectangle FastAPI_JobAPI
+queue InMemoryJobQueue
+component Worker
+component VODDownloader
+component ChatFetcherOrLocalImport
+component ChatSpikeDetector
+component SegmentGenerator
+component SegmentRanking
+component DurationAwareSegmentSelector
+component ffmpegSegmentCutter
+component MontageCompiler
+database OutputArtifacts
 
-- `backend/` owns clip discovery, download, compilation, and clip scoring (metadata-only; see `backend/scoring.py`).
-- `cli/` owns user-facing scripts (legacy entry points).
-- `api/` owns HTTP endpoints (currently `/health` only).
-- `frontend/` will own the React UI (planned, not implemented).
+UserClient --> FastAPI_JobAPI
+FastAPI_JobAPI --> InMemoryJobQueue
+InMemoryJobQueue --> Worker
+Worker --> VODDownloader
+Worker --> ChatFetcherOrLocalImport
+Worker --> ChatSpikeDetector
+Worker --> SegmentGenerator
+Worker --> SegmentRanking
+Worker --> DurationAwareSegmentSelector
+Worker --> ffmpegSegmentCutter
+Worker --> MontageCompiler
+MontageCompiler --> OutputArtifacts
+@enduml
+```
 
-## Key invariants
+## Pipeline Steps
 
-- Deterministic output for identical inputs and configuration.
-- Clip compilation should not mutate source assets in place.
-- Selenium automation should fail fast with clear errors when VOD data is missing.
+1. Submit `vod_highlights` job through API or CLI.
+2. Queue stores the job in memory.
+3. Worker pulls one queued job and executes the pipeline.
+4. Download VOD to local `vod.mp4`.
+5. Fetch replay chat to `chat.jsonl` (or use provided local chat file).
+6. Convert chat into spike buckets and candidate segments.
+7. Rank segments by spike score plus optional keyword bonus.
+8. Select non-overlapping segments under montage constraints.
+9. Cut segment clips with ffmpeg into `clips/`.
+10. Compile selected clips into `montage.mp4`.
 
-## Decision log (optional)
+## Ranking Details
 
-Record important architectural decisions and tradeoffs.
+Current segment scoring (see `backend/segment_scoring.py`):
+
+```text
+total_score = spike_score + keyword_bonus
+```
+
+- `spike_score`: strength of chat activity for the segment window
+- `keyword_bonus`: fixed additive bonus for keyword matches in segment context
+- `keyword_cap`: maximum bonus cap to prevent runaway keyword weighting
+
+Sort order is deterministic:
+1. higher `total_score`
+2. higher `spike_score`
+3. earlier `start_s`
+4. earlier `end_s`
+5. original index as stable final tie-break
+
+## Module Boundaries
+
+- `api/` handles request validation and job endpoints.
+- `backend/job_queue.py` owns in-memory queue behavior.
+- `backend/worker.py` orchestrates job handlers and status updates.
+- `backend/db/` optionally persists jobs and outputs to SQLite when DB is enabled.
+- `backend/vod_download.py`, `backend/vod_chat_fetch.py`, `backend/vod_chat_pipeline.py`,
+  `backend/selection.py`, `backend/vod_cut.py`, and `backend/vod_montage.py` own the VOD pipeline stages.
+- `cli/` provides script entry points.
+
+## Invariants
+
+- Identical inputs and parameters should produce deterministic ordering and outputs.
+- Source VOD is never modified in place; outputs are written as new artifacts.
+- Missing dependencies (for example ffmpeg) should fail fast with clear errors.

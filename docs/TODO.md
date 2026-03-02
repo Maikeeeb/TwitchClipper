@@ -138,40 +138,49 @@ For product direction and phased deliverables (ranking, job queue, VOD highlight
 
 
 ## EPIC: Database persistence
-- [ ] TODO-DB-001 Add SQLite persistence for jobs and outputs
-- [ ] TODO-DB-002 Store job status updates during runs
-- [ ] TODO-DB-003 Store final outputs and metadata paths
-- [ ] TODO-DB-004 Add tests for persistence layer
+- [x] TODO-DB-001 Add SQLite persistence for jobs and outputs
+- [x] TODO-DB-002 Store job status updates during runs
+- [x] TODO-DB-003 Store final outputs and metadata paths
+- [x] TODO-DB-004 Add tests for persistence layer
 
 # P0 (Fix first)
-- Add explicit validation for streamer name input and empty clip lists.
-- Ensure compilation fails gracefully when clips are corrupted or missing.
+- [ ] Add explicit validation for `clip_montage` streamer names (reject empty/whitespace names),
+  not just empty lists.
+- [ ] Ensure legacy `backend/oneVideo.py` compilation fails gracefully when source clips are
+  missing/corrupted (skip + report instead of hard-failing).
 
 # P1 (High priority)
-- Introduce a config module for paths, timeouts, max clips, and output directories.
-- Replace fragile filename parsing with explicit metadata storage (JSON or CSV).
-- Add logging instead of `print()` for scraper/compile pipelines.
-- Add headless mode and configurable Firefox profile options.
+- [ ] Introduce a shared config module for paths, timeouts, max clips, and output directories
+  across API/worker/backend.
+- [x] Replaced fragile filename-only metadata with explicit clip metadata sidecars (`.json`) in
+  the clip download flow.
+- [ ] Migrate legacy compile path to consume metadata sidecars and remove remaining filename parsing
+  assumptions.
+- [ ] Add structured logging instead of `print()` for legacy scraper/compile modules.
+- [x] Added configurable headless Selenium mode (`HEADLESS` env var and function args).
+- [ ] Add configurable Firefox profile options (path/preferences) for Selenium runs.
 
 # P2 (Nice to have)
-- Add API endpoints to trigger scraping/compilation and report status.
-- Add a CLI wrapper with options (streamer list, max clips, output dir).
-- Add caching of downloaded clips to avoid repeat downloads.
-- Add a lightweight UI to monitor compilation status.
+- [x] Added API endpoints to submit jobs and check/report job status (including clip montage and
+  VOD highlights flows).
+- [ ] Extend CLI with `clip-montage` command options (`streamer list`, `max clips`,
+  `output dir`) to match legacy workflow needs.
+- [ ] Add caching/skip logic for already-downloaded clips to avoid repeated downloads.
 
 # Test Coverage Mapping
-- TODO-TEST-API-HEALTH: Validate health endpoint responses and method errors.
-- TODO-TEST-CLIPS-GETCLIPS: Verify clip scraping/download behavior and edge cases.
-- TODO-TEST-CLIPS-DOWNLOAD: Validate download_clip success and failure modes.
-- TODO-TEST-CLIPS-EXTRACT: Validate extract_mp4_url_from_html parsing behavior.
-- TODO-TEST-IMPORTS: Ensure backend modules import and expose expected callables.
-- TODO-TEST-ONEVIDEO-COMPILE: Validate compile output creation and no-clip behavior.
-- TODO-TEST-OVERLAY: Validate render_overlay parameter handling and failure mode.
-- TODO-TEST-TRANSITION: Validate oneTransition output path handling and errors.
-- TODO-TEST-VOD-SMOKE: Validate full vod_highlights pipeline against live Twitch when integration is enabled.
+- [ ] TODO-TEST-API-HEALTH: Validate health endpoint response and method-error behavior (success
+  path exists; method-error coverage still needed).
+- [x] TODO-TEST-CLIPS-GETCLIPS: Verify clip scraping/download behavior and edge cases.
+- [x] TODO-TEST-CLIPS-DOWNLOAD: Validate `download_clip` success and failure modes.
+- [x] TODO-TEST-CLIPS-EXTRACT: Validate `extract_mp4_url_from_html` parsing behavior.
+- [x] TODO-TEST-IMPORTS: Ensure backend modules import and expose expected callables.
+- [x] TODO-TEST-ONEVIDEO-COMPILE: Validate compile output creation and no-clip behavior.
+- [x] TODO-TEST-OVERLAY: Validate `overlay` parameter handling and failure mode.
+- [x] TODO-TEST-TRANSITION: Validate `oneTransition` output path handling and errors.
+- [x] TODO-TEST-VOD-SMOKE: Validate full `vod_highlights` pipeline when integration is enabled.
 
 # Completed
-- Stabilized Twitch clip selectors with fallback strategies in `backend/clips.py`.
-- Added retry/skip logic for missing/duplicate video sources.
-- Added a `download_clip()` helper to resolve MP4 URLs and download clips.
-- Added integration coverage for real Twitch download when enabled.
+- [x] Stabilized Twitch clip selectors with fallback strategies in `backend/clips.py`.
+- [x] Added retry/skip logic for missing/duplicate video sources.
+- [x] Added a `download_clip()` helper to resolve MP4 URLs and download clips.
+- [x] Added integration coverage for real Twitch download when enabled.

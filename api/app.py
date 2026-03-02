@@ -7,12 +7,14 @@ Run: uvicorn api.app:app --reload
 
 from __future__ import annotations
 
+import os
 from datetime import datetime, timezone
 from typing import Any, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from backend.db.repo import SQLiteJobRepository
 from backend.job_queue import InMemoryJobQueue
 from backend.jobs import Job
 from backend.worker import Worker, default_handlers
@@ -65,10 +67,11 @@ class JobResponse(BaseModel):
     finished_at: Optional[str] = None
     error: Optional[str] = None
     result: Optional[dict[str, Any]] = None
+    outputs: Optional[dict[str, Any]] = None
     params: dict[str, Any] = Field(default_factory=dict)
 
     @classmethod
-    def from_job(cls, job: Job) -> "JobResponse":
+    def from_job(cls, job: Job, *, outputs: Optional[dict[str, Any]] = None) -> "JobResponse":
         def iso(d: Optional[datetime]) -> Optional[str]:
             return d.isoformat() if d is not None else None
 
@@ -82,6 +85,7 @@ class JobResponse(BaseModel):
             finished_at=iso(job.finished_at),
             error=job.error,
             result=job.result,
+            outputs=outputs,
             params=job.params,
         )
 
@@ -102,12 +106,46 @@ def get_worker(request: Request) -> Worker:
     return request.app.state.worker
 
 
+def get_job_repo(request: Request) -> Optional[SQLiteJobRepository]:
+    return request.app.state.job_repo
+
+
+def _parse_bool_env(value: str | None, *, default: bool = False) -> bool:
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _build_optional_job_repo(
+    *,
+    job_repo: Optional[SQLiteJobRepository],
+    db_enabled: Optional[bool],
+    db_path: Optional[str],
+) -> Optional[SQLiteJobRepository]:
+    if job_repo is not None:
+        return job_repo
+
+    enabled = (
+        db_enabled
+        if db_enabled is not None
+        else _parse_bool_env(os.getenv("TWITCHCLIPPER_DB_ENABLED"), default=False)
+    )
+    if not enabled:
+        return None
+
+    path = db_path or os.getenv("TWITCHCLIPPER_DB_PATH", "./data/twitchclipper.sqlite3")
+    return SQLiteJobRepository(path)
+
+
 # --- App factory ---
 
 
 def create_app(
     queue: Optional[InMemoryJobQueue] = None,
     handlers: Optional[dict[str, Any]] = None,
+    job_repo: Optional[SQLiteJobRepository] = None,
+    db_enabled: Optional[bool] = None,
+    db_path: Optional[str] = None,
 ) -> FastAPI:
     """
     Build FastAPI app. Default: in-memory queue and default_handlers().
@@ -115,7 +153,16 @@ def create_app(
     """
     app = FastAPI(title="TwitchClipper API")
     app.state.queue = queue if queue is not None else InMemoryJobQueue()
-    app.state.worker = Worker(app.state.queue, handlers or default_handlers())
+    app.state.job_repo = _build_optional_job_repo(
+        job_repo=job_repo,
+        db_enabled=db_enabled,
+        db_path=db_path,
+    )
+    app.state.worker = Worker(
+        app.state.queue,
+        handlers or default_handlers(),
+        job_repo=app.state.job_repo,
+    )
 
     @app.get("/health")
     def health() -> dict[str, bool]:
@@ -125,9 +172,12 @@ def create_app(
     def submit_clip_montage(
         body: ClipMontageJobRequest,
         queue: InMemoryJobQueue = Depends(get_queue),
+        job_repo: Optional[SQLiteJobRepository] = Depends(get_job_repo),
     ) -> dict[str, str]:
         params = body.model_dump()
         job = queue.create_job("clip_montage", params)
+        if job_repo is not None:
+            job_repo.create_job(job)
         queue.enqueue(job)
         return {"job_id": job.id}
 
@@ -135,9 +185,12 @@ def create_app(
     def submit_vod_highlights(
         body: VodHighlightsJobRequest,
         queue: InMemoryJobQueue = Depends(get_queue),
+        job_repo: Optional[SQLiteJobRepository] = Depends(get_job_repo),
     ) -> dict[str, str]:
         params = body.model_dump()
         job = queue.create_job("vod_highlights", params)
+        if job_repo is not None:
+            job_repo.create_job(job)
         queue.enqueue(job)
         return {"job_id": job.id}
 
@@ -145,8 +198,11 @@ def create_app(
     def submit_job(
         body: JobSubmitRequest,
         queue: InMemoryJobQueue = Depends(get_queue),
+        job_repo: Optional[SQLiteJobRepository] = Depends(get_job_repo),
     ) -> dict[str, str]:
         job = queue.create_job(body.type, body.params)
+        if job_repo is not None:
+            job_repo.create_job(job)
         queue.enqueue(job)
         return {"job_id": job.id}
 
@@ -155,11 +211,20 @@ def create_app(
     def get_job(
         job_id: str,
         queue: InMemoryJobQueue = Depends(get_queue),
+        job_repo: Optional[SQLiteJobRepository] = Depends(get_job_repo),
     ) -> JobResponse:
-        job = queue.get(job_id)
+        # Single source of truth rule:
+        # - DB enabled: status/result reads come from SQLite.
+        # - DB disabled: reads come from in-memory queue storage.
+        if job_repo is not None:
+            job = job_repo.get_job(job_id)
+            outputs = job_repo.get_job_outputs(job_id)
+        else:
+            job = queue.get(job_id)
+            outputs = None
         if job is None:
             raise HTTPException(status_code=404, detail="Job not found")
-        return JobResponse.from_job(job)
+        return JobResponse.from_job(job, outputs=outputs)
 
     # Dev helper: process one queued job. Remove or mark dev-only when a real worker process exists.
     @app.post("/jobs/run-next")

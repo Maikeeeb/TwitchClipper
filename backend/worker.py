@@ -1,7 +1,8 @@
 """
 Background worker: run queued jobs via registered handlers.
 
-Single-threaded loop only. No persistence. Exceptions become FAILED jobs.
+Single-threaded loop only. Exceptions become FAILED jobs.
+When enabled, status/output persistence is delegated to backend.db repo layer.
 """
 
 from __future__ import annotations
@@ -10,6 +11,7 @@ import os
 from datetime import datetime
 from typing import Callable
 
+from backend.db.repo import SQLiteJobRepository
 from backend.job_queue import InMemoryJobQueue
 from backend.jobs import Job, JobStatus
 
@@ -159,9 +161,26 @@ class Worker:
         self,
         queue: InMemoryJobQueue,
         handlers: dict[str, JobHandler] | None = None,
+        job_repo: SQLiteJobRepository | None = None,
     ) -> None:
         self.queue = queue
         self.handlers = handlers if handlers is not None else {}
+        self.job_repo = job_repo
+
+    def _persist_status(self, job: Job) -> None:
+        if self.job_repo is None:
+            return
+        updated = self.job_repo.update_job_status(
+            job.id,
+            job.status.value,
+            progress=job.progress,
+            started_at=job.started_at,
+            finished_at=job.finished_at,
+            error=job.error,
+            result=job.result,
+        )
+        if not updated:
+            self.job_repo.create_job(job)
 
     def run_next(self, *, now: datetime) -> Job | None:
         """
@@ -173,15 +192,21 @@ class Worker:
         if job is None:
             return None
         job.start(now)
+        self._persist_status(job)
         handler = self.handlers.get(job.type)
         if handler is None:
             job.fail(f"No handler registered for job type: {job.type}", now)
+            self._persist_status(job)
             return job
         try:
             result = handler(job)
             job.succeed(result, now)
+            self._persist_status(job)
+            if self.job_repo is not None and isinstance(result, dict):
+                self.job_repo.save_job_outputs(job.id, result)
         except Exception as e:
             job.fail(str(e), now)
+            self._persist_status(job)
         return job
 
     def run_until_empty(self, *, now: datetime) -> list[Job]:

@@ -9,6 +9,7 @@ from backend import clips
 from backend import chat_import
 from backend import chat_spikes
 from backend import clip_models
+from backend import db
 from backend import filtering
 from backend import job_queue
 from backend import jobs
@@ -60,3 +61,4 @@ def test_backend_modules_importable() -> None:
     assert hasattr(worker, "Worker")
     assert callable(getattr(worker.Worker, "run_next"))
     assert callable(getattr(worker.Worker, "run_until_empty"))
+    assert hasattr(db, "SQLiteJobRepository")
