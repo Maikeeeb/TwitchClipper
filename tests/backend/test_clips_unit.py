@@ -102,9 +102,13 @@ class _FlakyThread:
 class _DummyOptions:
     def __init__(self):
         self.arguments = []
+        self.preferences = {}
 
     def add_argument(self, arg):
         self.arguments.append(arg)
+
+    def set_preference(self, key, value):
+        self.preferences[key] = value
 
 
 def _noop_urlretrieve(_url, output_path):
@@ -281,6 +285,52 @@ def test_getclips_uses_headless_env_and_gecko_path(monkeypatch, tmp_path):
     assert captured["service_path"] == "C:\\fake\\geckodriver.exe"
     assert "-headless" in captured["options"].arguments
     assert captured["quit_called"] is True
+
+
+def test_build_firefox_driver_uses_profile_path_and_preferences(monkeypatch):
+    # Covers: TODO-TEST-CLIPS-GETCLIPS
+    captured = {"service_path": None, "options": None}
+
+    def _dummy_service(*_args, **kwargs):
+        captured["service_path"] = kwargs.get("executable_path")
+        return "service"
+
+    def _dummy_firefox(service=None, options=None):
+        captured["options"] = options
+        return object()
+
+    monkeypatch.setattr(clips, "Service", _dummy_service)
+    monkeypatch.setattr(clips.webdriver, "FirefoxOptions", _DummyOptions)
+    monkeypatch.setattr(clips.webdriver, "Firefox", _dummy_firefox)
+    monkeypatch.setattr(clips.os.path, "exists", lambda _path: True)
+
+    clips._build_firefox_driver(
+        geckodriver_path="C:\\fake\\geckodriver.exe",
+        firefox_profile_path="C:\\fake\\profile",
+        firefox_preferences={"media.autoplay.default": 5},
+    )
+
+    assert captured["service_path"] == "C:\\fake\\geckodriver.exe"
+    assert "-profile" in captured["options"].arguments
+    assert "C:\\fake\\profile" in captured["options"].arguments
+    assert captured["options"].preferences["media.autoplay.default"] == 5
+
+
+def test_build_firefox_driver_invalid_profile_path_raises(monkeypatch):
+    # Covers: TODO-TEST-CLIPS-GETCLIPS
+    monkeypatch.setattr(clips.os.path, "exists", lambda path: False)
+    monkeypatch.setattr(clips.webdriver, "FirefoxOptions", _DummyOptions)
+    with pytest.raises(ValueError, match="profile path does not exist"):
+        clips._build_firefox_driver(firefox_profile_path="C:\\missing\\profile")
+
+
+def test_build_firefox_driver_invalid_preferences_env_raises(monkeypatch):
+    # Covers: TODO-TEST-CLIPS-GETCLIPS
+    monkeypatch.setenv("FIREFOX_PROFILE_PREFERENCES_JSON", '{"bad_json"')
+    monkeypatch.setattr(clips.webdriver, "FirefoxOptions", _DummyOptions)
+    monkeypatch.setattr(clips.os.path, "exists", lambda _path: True)
+    with pytest.raises(ValueError, match="must be valid JSON"):
+        clips._build_firefox_driver()
 
 
 def test_getclips_skips_missing_video_src(monkeypatch, tmp_path):

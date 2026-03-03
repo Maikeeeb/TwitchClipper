@@ -11,6 +11,15 @@ import os
 from datetime import datetime
 from typing import Callable
 
+from backend.config import (
+    DEFAULT_CURRENT_VIDEOS_DIR,
+    DEFAULT_MAX_CLIPS,
+    DEFAULT_OUTPUT_DIR,
+    DEFAULT_PER_STREAMER_K,
+    DEFAULT_SCRAPE_POOL_SIZE,
+    WORKER_DEFAULT_SEGMENT_PADDING_SECONDS,
+    WORKER_DEFAULT_VOD_MIN_COUNT,
+)
 from backend.db.repo import SQLiteJobRepository
 from backend.job_queue import InMemoryJobQueue
 from backend.models.jobs import Job, JobStatus
@@ -28,13 +37,20 @@ def _default_clip_montage_handler(job: Job) -> dict:
     """
     from backend import pipeline
 
-    streamer_names = job.params.get("streamer_names") or []
-    current_videos_dir = job.params.get("current_videos_dir", ".")
+    raw_streamer_names = job.params.get("streamer_names") or []
+    current_videos_dir = job.params.get("current_videos_dir", DEFAULT_CURRENT_VIDEOS_DIR)
+    if not isinstance(raw_streamer_names, list):
+        raise ValueError("streamer_names must be a list of strings")
+    streamer_names = [str(name).strip() for name in raw_streamer_names if str(name).strip()]
     if not streamer_names:
-        return {"paths": [], "count": 0}
+        raise ValueError("streamer_names must contain at least one non-empty name")
     selected = pipeline.scrape_filter_rank_download(
         list(streamer_names),
         current_videos_dir,
+        apply_overlay=bool(job.params.get("apply_overlay", True)),
+        max_clips=int(job.params.get("max_clips", DEFAULT_MAX_CLIPS)),
+        scrape_pool_size=int(job.params.get("scrape_pool_size", DEFAULT_SCRAPE_POOL_SIZE)),
+        per_streamer_k=int(job.params.get("per_streamer_k", DEFAULT_PER_STREAMER_K)),
     )
     paths = [a.output_path for a in selected]
     return {"paths": paths, "count": len(paths)}
@@ -74,14 +90,16 @@ def _default_vod_highlights_handler(job: Job) -> dict:
     from backend.selection import select_non_overlapping_segments_for_duration
 
     vod_url = _resolve_vod_url(job)
-    output_dir = job.params.get("output_dir", ".")
+    output_dir = job.params.get("output_dir", DEFAULT_OUTPUT_DIR)
     keywords = job.params.get("keywords") or []
     if not isinstance(keywords, list):
         raise ValueError("keywords must be a list of strings when provided")
 
     spike_window_seconds = int(job.params.get("spike_window_seconds", 30))
-    segment_padding_seconds = int(job.params.get("segment_padding_seconds", 15))
-    min_count = int(job.params.get("min_count", 5))
+    segment_padding_seconds = int(
+        job.params.get("segment_padding_seconds", WORKER_DEFAULT_SEGMENT_PADDING_SECONDS)
+    )
+    min_count = int(job.params.get("min_count", WORKER_DEFAULT_VOD_MIN_COUNT))
     max_segment_seconds = float(job.params.get("max_segment_seconds", 120))
     diversity_windows = int(job.params.get("diversity_windows", 8))
 

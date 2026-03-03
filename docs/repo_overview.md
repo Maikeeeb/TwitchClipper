@@ -35,6 +35,7 @@ TwitchClipper/ - Repository root
 ## Backend layout (`backend/`)
 
 - **Configuration**: `Not used`
+- **Shared runtime defaults**: `backend/config.py` (paths, limits, and timeout defaults shared by API/worker/backend)
 - **Domain logic**: `backend/clips.py`, `backend/oneVideo.py`, `backend/transition.py`,
   `backend/overlay.py`, `backend/scoring.py` (clip scoring from metadata),
   `backend/clip_models.py` (ClipRef, ClipAsset, JSON sidecar persistence),
@@ -51,7 +52,7 @@ TwitchClipper/ - Repository root
   `backend/filtering.py` (clip dedupe and max-per-streamer filter),
   `backend/pipeline.py` (scrape → filter → rank → top N → download; PER_STREAMER_K for multi-streamer)
 - **Public API**: `Not implemented yet`
-- **CLI entrypoint**: `cli/main.py`
+- **CLI entrypoint**: `cli/main.py` (`vod-highlights` and `clip-montage` commands)
 
 ## API service (`api/`)
 

@@ -135,6 +135,30 @@ def test_submit_rejects_empty_streamer_names(client: TestClient) -> None:
     assert resp.status_code == 422
 
 
+@pytest.mark.parametrize("streamer_names", [[""], ["   "], ["ok", "   "]])
+def test_submit_rejects_blank_streamer_name_values(
+    client: TestClient, streamer_names: list[str]
+) -> None:
+    """Defect: whitespace-only names are rejected even when list is non-empty."""
+    resp = client.post(
+        "/jobs/clip-montage",
+        json={"streamer_names": streamer_names},
+    )
+    assert resp.status_code == 422
+
+
+def test_submit_strips_surrounding_whitespace_in_streamer_names(client: TestClient) -> None:
+    """Validation: accepted streamer names are normalized to trimmed values."""
+    resp = client.post(
+        "/jobs/clip-montage",
+        json={"streamer_names": ["  streamer1  "]},
+    )
+    assert resp.status_code == 200
+    job_id = resp.json()["job_id"]
+    payload = client.get(f"/jobs/{job_id}").json()
+    assert payload["params"]["streamer_names"] == ["streamer1"]
+
+
 def test_submit_vod_highlights_returns_job_id_and_queues_job() -> None:
     """Validation: POST /jobs/vod-highlights enqueues a vod_highlights job."""
     app = create_app(handlers={"vod_highlights": lambda job: {"ok": True}})
@@ -197,3 +221,10 @@ def test_health_returns_ok(client: TestClient) -> None:
     resp = client.get("/health")
     assert resp.status_code == 200
     assert resp.json() == {"ok": True}
+
+
+@pytest.mark.parametrize("method", ["POST", "PUT", "PATCH", "DELETE"])
+def test_health_rejects_non_get_methods(client: TestClient, method: str) -> None:
+    """Defect: non-GET methods on /health return 405 method not allowed."""
+    resp = client.request(method, "/health")
+    assert resp.status_code == 405

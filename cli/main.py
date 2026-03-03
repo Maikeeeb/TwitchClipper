@@ -36,6 +36,29 @@ def _build_parser() -> argparse.ArgumentParser:
     vod.add_argument("--poll-interval-seconds", type=float, default=1.0)
     vod.add_argument("--run-next-interval-seconds", type=float, default=0.2)
     vod.add_argument("--timeout-seconds", type=int, default=3600)
+
+    clip = subparsers.add_parser(
+        "clip-montage",
+        help="Submit a clip montage job via API and wait for completion.",
+    )
+    clip.add_argument(
+        "--streamer",
+        dest="streamer_names",
+        action="append",
+        required=True,
+        help="Streamer name to scrape clips from (repeatable).",
+    )
+    clip.add_argument("--max-clips", type=int, default=None, help="Optional max clips to download.")
+    clip.add_argument(
+        "--output-dir",
+        dest="current_videos_dir",
+        default=".",
+        help="Directory for downloaded clip artifacts.",
+    )
+    clip.add_argument("--api-base-url", default="http://127.0.0.1:8000")
+    clip.add_argument("--poll-interval-seconds", type=float, default=1.0)
+    clip.add_argument("--run-next-interval-seconds", type=float, default=0.2)
+    clip.add_argument("--timeout-seconds", type=int, default=3600)
     return parser
 
 
@@ -46,6 +69,20 @@ def _join_url(base: str, path: str) -> str:
 def _submit_vod_highlights(base_url: str, payload: dict[str, Any]) -> str:
     response = requests.post(
         _join_url(base_url, "/jobs/vod-highlights"),
+        json=payload,
+        timeout=30,
+    )
+    response.raise_for_status()
+    data = response.json()
+    job_id = data.get("job_id")
+    if not isinstance(job_id, str) or not job_id:
+        raise RuntimeError("API response missing valid job_id")
+    return job_id
+
+
+def _submit_clip_montage(base_url: str, payload: dict[str, Any]) -> str:
+    response = requests.post(
+        _join_url(base_url, "/jobs/clip-montage"),
         json=payload,
         timeout=30,
     )
@@ -110,11 +147,49 @@ def _handle_vod_highlights(args: argparse.Namespace) -> int:
         time.sleep(float(args.poll_interval_seconds))
 
 
+def _handle_clip_montage(args: argparse.Namespace) -> int:
+    payload = {
+        "streamer_names": args.streamer_names,
+        "current_videos_dir": args.current_videos_dir,
+    }
+    if args.max_clips is not None:
+        payload["max_clips"] = args.max_clips
+
+    job_id = _submit_clip_montage(args.api_base_url, payload)
+    print(f"Submitted job_id={job_id}")
+
+    started = time.time()
+    while True:
+        if time.time() - started > float(args.timeout_seconds):
+            print("Timed out waiting for job completion.", file=sys.stderr)
+            return 2
+
+        _run_next(args.api_base_url)
+        job = _get_job(args.api_base_url, job_id)
+        status = str(job.get("status", "")).lower()
+        print(f"status={status}")
+
+        if status == "done":
+            result = job.get("result") or {}
+            print(json.dumps(result, indent=2))
+            return 0
+
+        if status == "failed":
+            error = job.get("error") or "unknown error"
+            print(f"Job failed: {error}", file=sys.stderr)
+            return 1
+
+        time.sleep(float(args.run_next_interval_seconds))
+        time.sleep(float(args.poll_interval_seconds))
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
     if args.command == "vod-highlights":
         return _handle_vod_highlights(args)
+    if args.command == "clip-montage":
+        return _handle_clip_montage(args)
     parser.error("Unknown command")
     return 2
 

@@ -8,12 +8,13 @@ Covers: TODO-JOBS-003
 """
 
 from datetime import datetime, timezone
+import importlib
 
 import pytest
 
 from backend.job_queue import InMemoryJobQueue
 from backend.models.jobs import JobStatus
-from backend.worker import Worker
+from backend.worker import Worker, _default_clip_montage_handler
 
 
 def _fixed_now() -> datetime:
@@ -97,4 +98,47 @@ def test_run_until_empty_processes_all_fifo_order() -> None:
     assert done[1] is j2
     assert j1.status == JobStatus.DONE and j1.result == {"first": True}
     assert j2.status == JobStatus.DONE and j2.result == {"second": True}
+
+
+def test_default_clip_montage_handler_rejects_blank_streamer_names() -> None:
+    """Defect: handler rejects whitespace-only names from non-API callers."""
+    queue = InMemoryJobQueue()
+    job = queue.create_job("clip_montage", {"streamer_names": ["   "], "current_videos_dir": "."})
+    with pytest.raises(ValueError, match="at least one non-empty name"):
+        _default_clip_montage_handler(job)
+
+
+def test_default_clip_montage_handler_forwards_optional_pipeline_params(monkeypatch) -> None:
+    """Validation: handler forwards clip montage tuning params to pipeline."""
+    captured = {}
+    pipeline = importlib.import_module("backend.pipeline")
+
+    def _fake_scrape_filter_rank_download(streamer_names, current_videos_dir, **kwargs):
+        captured["streamer_names"] = streamer_names
+        captured["current_videos_dir"] = current_videos_dir
+        captured["kwargs"] = kwargs
+        return []
+
+    monkeypatch.setattr(pipeline, "scrape_filter_rank_download", _fake_scrape_filter_rank_download)
+    queue = InMemoryJobQueue()
+    job = queue.create_job(
+        "clip_montage",
+        {
+            "streamer_names": ["alpha"],
+            "current_videos_dir": "out",
+            "max_clips": 7,
+            "scrape_pool_size": 12,
+            "per_streamer_k": 3,
+            "apply_overlay": False,
+        },
+    )
+    result = _default_clip_montage_handler(job)
+
+    assert result == {"paths": [], "count": 0}
+    assert captured["streamer_names"] == ["alpha"]
+    assert captured["current_videos_dir"] == "out"
+    assert captured["kwargs"]["max_clips"] == 7
+    assert captured["kwargs"]["scrape_pool_size"] == 12
+    assert captured["kwargs"]["per_streamer_k"] == 3
+    assert captured["kwargs"]["apply_overlay"] is False
 

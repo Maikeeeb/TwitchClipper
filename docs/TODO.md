@@ -144,31 +144,31 @@ For product direction and phased deliverables (ranking, job queue, VOD highlight
 - [x] TODO-DB-004 Add tests for persistence layer
 
 # P0 (Fix first)
-- [ ] Add explicit validation for `clip_montage` streamer names (reject empty/whitespace names),
+- [x] Add explicit validation for `clip_montage` streamer names (reject empty/whitespace names),
   not just empty lists.
-- [ ] Ensure legacy `backend/oneVideo.py` compilation fails gracefully when source clips are
+- [x] Ensure legacy `backend/oneVideo.py` compilation fails gracefully when source clips are
   missing/corrupted (skip + report instead of hard-failing).
 
 # P1 (High priority)
-- [ ] Introduce a shared config module for paths, timeouts, max clips, and output directories
+- [x] Introduce a shared config module for paths, timeouts, max clips, and output directories
   across API/worker/backend.
 - [x] Replaced fragile filename-only metadata with explicit clip metadata sidecars (`.json`) in
   the clip download flow.
-- [ ] Migrate legacy compile path to consume metadata sidecars and remove remaining filename parsing
+- [x] Migrate legacy compile path to consume metadata sidecars and remove remaining filename parsing
   assumptions.
-- [ ] Add structured logging instead of `print()` for legacy scraper/compile modules.
+- [x] Add structured logging instead of `print()` for legacy scraper/compile modules.
 - [x] Added configurable headless Selenium mode (`HEADLESS` env var and function args).
-- [ ] Add configurable Firefox profile options (path/preferences) for Selenium runs.
+- [x] Add configurable Firefox profile options (path/preferences) for Selenium runs.
 
 # P2 (Nice to have)
 - [x] Added API endpoints to submit jobs and check/report job status (including clip montage and
   VOD highlights flows).
-- [ ] Extend CLI with `clip-montage` command options (`streamer list`, `max clips`,
+- [x] Extend CLI with `clip-montage` command options (`streamer list`, `max clips`,
   `output dir`) to match legacy workflow needs.
 - [ ] Add caching/skip logic for already-downloaded clips to avoid repeated downloads.
 
 # Test Coverage Mapping
-- [ ] TODO-TEST-API-HEALTH: Validate health endpoint response and method-error behavior (success
+- [x] TODO-TEST-API-HEALTH: Validate health endpoint response and method-error behavior (success
   path exists; method-error coverage still needed).
 - [x] TODO-TEST-CLIPS-GETCLIPS: Verify clip scraping/download behavior and edge cases.
 - [x] TODO-TEST-CLIPS-DOWNLOAD: Validate `download_clip` success and failure modes.

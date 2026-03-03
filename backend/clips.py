@@ -1,4 +1,6 @@
 import html
+import json
+import logging
 import os
 import re
 import time
@@ -30,6 +32,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+
+logger = logging.getLogger(__name__)
 
 
 def overlay(view_count, name, current_videos_dir):
@@ -64,6 +68,8 @@ def getclips(
     wait_seconds=560,
     apply_overlay=True,
     headless=None,
+    firefox_profile_path=None,
+    firefox_preferences=None,
     driver=None,
     download=True,
 ):
@@ -84,21 +90,15 @@ def getclips(
     current_videos_dir = current_videos_dir or os.path.join(repo_root, "currentVideos")
     os.makedirs(current_videos_dir, exist_ok=True)
 
-    env_gecko_path = os.getenv("GECKODRIVER_PATH")
-    gecko_path = geckodriver_path or env_gecko_path or os.path.join(base_dir, "geckodriver.exe")
-    if gecko_path and os.path.exists(gecko_path):
-        service = Service(executable_path=gecko_path)
-    else:
-        service = Service()
     if driver:
         browser = driver
     else:
-        options = webdriver.FirefoxOptions()
-        if headless is None:
-            headless = os.getenv("HEADLESS", "0") == "1"
-        if headless:
-            options.add_argument("-headless")
-        browser = webdriver.Firefox(service=service, options=options)
+        browser = _build_firefox_driver(
+            headless=headless,
+            geckodriver_path=geckodriver_path,
+            firefox_profile_path=firefox_profile_path,
+            firefox_preferences=firefox_preferences,
+        )
 
     # Go to streamer clips page and collect clip links.
     browser.get(f"https://www.twitch.tv/{name}/clips?filter=clips&range=24hr")
@@ -127,7 +127,7 @@ def getclips(
 
     # finds all the video link elements
     video_links = _find_clip_links(browser)
-    print(video_links)
+    logger.info("Collected clip links", extra={"streamer": name, "count": len(video_links)})
     try:
         for index, link in enumerate(video_links[:max_clips]):
             if link and link.startswith("/"):
@@ -162,10 +162,13 @@ def getclips(
                 time.sleep(0.5)
 
             if not current_video or current_video in current_video_urls:
-                print("Skipping duplicate or missing video src.")
+                logger.warning(
+                    "Skipping duplicate or missing video src",
+                    extra={"streamer": name, "clip_url": link},
+                )
                 continue
 
-            print(current_video)
+            logger.info("Resolved clip media source", extra={"streamer": name, "video_src": current_video})
             current_video_urls.add(current_video)
 
             title = None
@@ -198,7 +201,6 @@ def getclips(
             )
             results.append(clip_ref)
 
-            print(current_video)
             # File naming convention: <viewcount><streamer>0.mp4 (used by oneVideo.py parsing).
             output_path = os.path.join(
                 current_videos_dir,
@@ -212,7 +214,10 @@ def getclips(
                     )
                 )
                 downloaded_meta.append((clip_ref, output_path, current_video))
-                print(output_path)
+                logger.info(
+                    "Queued clip download",
+                    extra={"streamer": name, "output_path": output_path, "clip_url": link},
+                )
             if index == 0:
                 view_count_first = view_count_str
 
@@ -222,10 +227,16 @@ def getclips(
                         download_list[-1].start()
                         break
                     except ValueError:
-                        print("Failed to grab url")
+                        logger.warning(
+                            "Failed to start download thread, retrying clip source lookup",
+                            extra={"streamer": name, "clip_url": link},
+                        )
                         current_video = _get_video_src()
                     except Exception as e:
-                        print(e)
+                        logger.exception(
+                            "Unexpected error while starting clip download thread",
+                            extra={"streamer": name, "clip_url": link, "error": str(e)},
+                        )
     finally:
         if driver is None:
             browser.quit()
@@ -234,7 +245,7 @@ def getclips(
             try:
                 video.join()
             except Exception as e:
-                print(e)
+                logger.exception("Unexpected error while waiting for clip downloads", extra={"error": str(e)})
 
         for ref, out_path, mp4_url in downloaded_meta:
             downloaded_at = datetime.now(timezone.utc).isoformat()
@@ -286,7 +297,31 @@ def fill_duration(asset: ClipAsset) -> ClipAsset:
     return asset
 
 
-def _build_firefox_driver(headless=None, geckodriver_path=None):
+def _load_firefox_preferences(
+    firefox_preferences: dict | None = None,
+) -> dict:
+    if firefox_preferences is not None:
+        if not isinstance(firefox_preferences, dict):
+            raise ValueError("firefox_preferences must be a dict when provided")
+        return firefox_preferences
+    raw = os.getenv("FIREFOX_PROFILE_PREFERENCES_JSON")
+    if not raw:
+        return {}
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError("FIREFOX_PROFILE_PREFERENCES_JSON must be valid JSON") from exc
+    if not isinstance(parsed, dict):
+        raise ValueError("FIREFOX_PROFILE_PREFERENCES_JSON must decode to a JSON object")
+    return parsed
+
+
+def _build_firefox_driver(
+    headless=None,
+    geckodriver_path=None,
+    firefox_profile_path=None,
+    firefox_preferences=None,
+):
     base_dir = os.path.dirname(__file__)
     env_gecko_path = os.getenv("GECKODRIVER_PATH")
     gecko_path = geckodriver_path or env_gecko_path or os.path.join(base_dir, "geckodriver.exe")
@@ -300,6 +335,14 @@ def _build_firefox_driver(headless=None, geckodriver_path=None):
         headless = os.getenv("HEADLESS", "0") == "1"
     if headless:
         options.add_argument("-headless")
+    profile_path = firefox_profile_path or os.getenv("FIREFOX_PROFILE_PATH")
+    if profile_path:
+        if not os.path.exists(profile_path):
+            raise ValueError(f"Firefox profile path does not exist: {profile_path}")
+        options.add_argument("-profile")
+        options.add_argument(profile_path)
+    for key, value in _load_firefox_preferences(firefox_preferences).items():
+        options.set_preference(str(key), value)
     return webdriver.Firefox(service=service, options=options)
 
 
@@ -311,6 +354,8 @@ def download_clip(
     headless=None,
     wait_seconds=30,
     geckodriver_path=None,
+    firefox_profile_path=None,
+    firefox_preferences=None,
 ) -> ClipAsset:
     """Download a Twitch clip and return ClipAsset. Writes JSON sidecar next to mp4."""
     if isinstance(clip_ref, str):
@@ -340,7 +385,12 @@ def download_clip(
     if not video_url:
         owns_driver = driver is None
         if owns_driver:
-            driver = _build_firefox_driver(headless=headless, geckodriver_path=geckodriver_path)
+            driver = _build_firefox_driver(
+                headless=headless,
+                geckodriver_path=geckodriver_path,
+                firefox_profile_path=firefox_profile_path,
+                firefox_preferences=firefox_preferences,
+            )
         try:
             driver.get(clip_url)
 
@@ -413,4 +463,4 @@ def download_clip(
 if __name__ == "__main__":
     start_time = time.time()
     getclips("zubatlel")
-    print("--- %s seconds ---" % (time.time() - start_time))
+    logger.info("Clip scraping run complete", extra={"elapsed_seconds": time.time() - start_time})
