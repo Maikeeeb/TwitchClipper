@@ -9,6 +9,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from backend.clip_models import write_clip_metadata
 from backend.models.clips import ClipAsset, ClipRef
 from backend.pipeline import (
     DEFAULT_MAX_CLIPS,
@@ -264,3 +265,63 @@ def test_single_streamer_path_unchanged(
     assert mock_download.call_count == 5
     downloaded_views = [c[0][0].views for c in mock_download.call_args_list]
     assert downloaded_views == [100, 99, 98, 97, 96]
+
+
+@patch("backend.pipeline.overlay")
+@patch("backend.pipeline.download_clip")
+@patch("backend.pipeline.getclips")
+def test_uses_cached_sidecar_asset_instead_of_redownloading(
+    mock_getclips: MagicMock,
+    mock_download: MagicMock,
+    mock_overlay: MagicMock,
+    tmp_path: Path,
+) -> None:
+    """Cache hit: existing sidecar+mp4 for clip_url skips download_clip."""
+    ref = _make_ref("https://x/clip/cached", views=100, streamer="alice")
+    mock_getclips.return_value = [ref]
+    cached_mp4 = tmp_path / "cached.mp4"
+    cached_mp4.write_text("mp4")
+    cached_asset = ClipAsset(
+        clip_ref=ref,
+        mp4_url="https://cdn.example.com/cached.mp4",
+        output_path=str(cached_mp4),
+        downloaded_at="2025-01-01T00:00:00Z",
+        duration_s=90.0,
+        created_at=None,
+    )
+    write_clip_metadata(cached_asset)
+
+    out = scrape_filter_rank_download(["alice"], str(tmp_path), max_clips=1, apply_overlay=False)
+
+    assert mock_download.call_count == 0
+    assert len(out) == 1
+    assert out[0].output_path == str(cached_mp4)
+
+
+@patch("backend.pipeline.overlay")
+@patch("backend.pipeline.download_clip")
+@patch("backend.pipeline.getclips")
+def test_missing_cached_mp4_falls_back_to_download(
+    mock_getclips: MagicMock,
+    mock_download: MagicMock,
+    mock_overlay: MagicMock,
+    tmp_path: Path,
+) -> None:
+    """Cache miss: sidecar with missing mp4 path triggers fresh download."""
+    ref = _make_ref("https://x/clip/missing", views=100, streamer="alice")
+    mock_getclips.return_value = [ref]
+    missing_asset = ClipAsset(
+        clip_ref=ref,
+        mp4_url="https://cdn.example.com/missing.mp4",
+        output_path=str(tmp_path / "does_not_exist.mp4"),
+        downloaded_at="2025-01-01T00:00:00Z",
+        duration_s=90.0,
+        created_at=None,
+    )
+    write_clip_metadata(missing_asset)
+    mock_download.side_effect = lambda r, **_: _make_asset(r)
+
+    out = scrape_filter_rank_download(["alice"], str(tmp_path), max_clips=1, apply_overlay=False)
+
+    assert mock_download.call_count == 1
+    assert len(out) == 1

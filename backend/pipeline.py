@@ -8,8 +8,9 @@ from __future__ import annotations
 
 import os
 from datetime import datetime, timezone
+from pathlib import Path
 
-from backend.clip_models import ClipRef
+from backend.clip_models import ClipAsset, ClipRef, read_clip_metadata
 from backend.clips import download_clip, getclips, overlay
 from backend.filtering import filter_clips
 from backend.scoring import rank_clips
@@ -25,6 +26,23 @@ DEFAULT_MAX_CLIPS = 20
 SCRAPE_POOL_SIZE = 50
 # Max candidates per streamer before global rank (multi-streamer only).
 PER_STREAMER_K = 10
+
+
+def _load_cached_assets_by_clip_url(current_videos_dir: str) -> dict[str, ClipAsset]:
+    """Index previously downloaded assets by clip_url using JSON sidecars."""
+    cached: dict[str, ClipAsset] = {}
+    for sidecar_path in Path(current_videos_dir).glob("*.json"):
+        try:
+            asset = read_clip_metadata(sidecar_path)
+        except Exception:
+            continue
+        clip_url = (asset.clip_ref.clip_url or "").strip()
+        if not clip_url:
+            continue
+        if not asset.output_path or not os.path.exists(asset.output_path):
+            continue
+        cached[clip_url] = asset
+    return cached
 
 
 def select_per_streamer_candidates(
@@ -86,9 +104,12 @@ def scrape_filter_rank_download(
     refs = filter_clips(candidates)
     refs = rank_clips(refs, now=now)
     refs = refs[:max_clips]
+    cached_assets = _load_cached_assets_by_clip_url(current_videos_dir)
     assets = []
     for ref in refs:
-        asset = download_clip(ref, output_dir=current_videos_dir)
+        asset = cached_assets.get(ref.clip_url)
+        if asset is None:
+            asset = download_clip(ref, output_dir=current_videos_dir)
         assets.append(asset)
     selected = select_clips_for_duration(
         assets,

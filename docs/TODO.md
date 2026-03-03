@@ -165,7 +165,7 @@ For product direction and phased deliverables (ranking, job queue, VOD highlight
   VOD highlights flows).
 - [x] Extend CLI with `clip-montage` command options (`streamer list`, `max clips`,
   `output dir`) to match legacy workflow needs.
-- [ ] Add caching/skip logic for already-downloaded clips to avoid repeated downloads.
+- [x] Add caching/skip logic for already-downloaded clips to avoid repeated downloads.
 
 # Test Coverage Mapping
 - [x] TODO-TEST-API-HEALTH: Validate health endpoint response and method-error behavior (success
