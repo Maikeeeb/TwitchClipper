@@ -1,33 +1,53 @@
 # Backend Report
 
-## `backend/__init__.py`
-- **What it does:** Marks the backend package.
-- **What works:** Imports cleanly.
-- **What doesn't:** N/A.
+This report reflects the current backend as of the latest `master` branch.
 
-## `backend/clips.py`
-- **What it does:** Uses Selenium to scrape Twitch clip links for a streamer, downloads clip MP4s, and optionally overlays streamer name on the first clip.
-- **What works:** Clip link discovery, download threads, overlay pipeline (when MoviePy/ffmpeg are available).
-- **What doesn't / risks:**
-  - Twitch page selectors are fragile and may break as the UI changes.
-  - Requires Firefox + geckodriver; download/overlay depends on ffmpeg.
-  - Download logic relies on thread start timing and may be flaky on slow networks.
-  - Filename conventions are tightly coupled to `oneVideo.py`.
+## Core orchestration
 
-## `backend/oneVideo.py`
-- **What it does:** Compiles clips in `currentVideos/` into a single montage and writes time stamps + streamer links.
-- **What works:** Clip concatenation, timestamp generation, streamer link output for filenames that follow the expected pattern.
-- **What doesn't / risks:**
-  - Assumes filename format with digits + streamer name.
-  - Hard-coded defaults for resolution and montage length.
-  - Requires ffmpeg; corrupted clips can break compilation.
+### `backend/pipeline.py` (clip montage path)
+- **What it does:** Orchestrates clip scrape -> filter -> rank -> capped download -> duration-based selection.
+- **What works:** Multi-streamer candidate balancing (`PER_STREAMER_K`), deterministic ranking, and cached asset reuse via JSON sidecars (skips re-download when sidecar+mp4 already exist).
+- **Known risks:**
+  - Twitch site scraping selectors in `backend/clips.py` remain a best-effort dependency.
+  - Overlay/remux steps still depend on ffmpeg availability.
 
-## `backend/overlay.py`
-- **What it does:** Simple overlay helper to add text to a video.
-- **What works:** Function-based overlay rendering.
-- **What doesn't / risks:** No usage in main pipeline; depends on ffmpeg for output.
+### `backend/worker.py` + `backend/job_queue.py`
+- **What it does:** Handles queued jobs and executes registered handlers (`clip_montage`, `vod_highlights`).
+- **What works:** Job lifecycle transitions (`queued -> running -> done/failed`) and structured result payloads.
+- **Known risks:** Current worker is run via API helper (`/jobs/run-next`) or explicit loop; no dedicated long-running process supervisor yet.
 
-## `backend/transition.py`
-- **What it does:** Generates a text-based transition clip.
-- **What works:** Generates a simple transition to an output directory.
-- **What doesn't / risks:** Not wired into the main flow; depends on ffmpeg.
+## API and persistence surface
+
+### `api/app.py`
+- **What it does:** Exposes job endpoints and request validation.
+- **What works:** `POST /jobs/clip-montage`, `POST /jobs/vod-highlights`, `POST /jobs`, `GET /jobs/{id}`, and `POST /jobs/run-next`.
+- **Known risks:** API is currently backend-first; no frontend-facing auth/rate-limiting layer yet.
+
+### `backend/db/`
+- **What it does:** Optional SQLite persistence for jobs and outputs.
+- **What works:** When enabled, job reads/writes use SQLite as source of truth.
+- **Known risks:** Local SQLite is suitable for single-node/dev workloads; multi-instance coordination is out of scope today.
+
+## VOD highlights pipeline
+
+### `backend/vod_download.py`
+- **What it does:** Downloads or resolves VOD media from Twitch/local inputs.
+- **What works:** Supports local and URL-based flows with safe defaults.
+- **Known risks:** External download tooling/network failures still require retry/observability improvements.
+
+### `backend/vod_chat_fetch.py` and `backend/chat_import.py`
+- **What they do:** Fetch Twitch replay chat (best effort) or import local chat logs.
+- **What works:** Normalized JSONL flow and offline-import path for deterministic testing.
+- **Known risks:** Twitch web endpoint shape can change without notice.
+
+### `backend/vod_chat_pipeline.py`, `backend/chat_spikes.py`, `backend/segment_generator.py`, `backend/segment_scoring.py`, `backend/selection.py`
+- **What they do:** Convert chat to spike windows, generate/merge/rank segments, and select final clips to fit target montage duration.
+- **What works:** Deterministic ranking with shared scoring primitives and duration-aware selection.
+- **Known risks:** Quality depends heavily on chat activity; low-chat streams may under-produce strong candidates.
+
+## Media assembly
+
+### `backend/vod_cut.py` and `backend/vod_montage.py`
+- **What they do:** Cut segments from VOD and compile final montage.
+- **What works:** Segment bounds validation and reusable montage assembly path.
+- **Known risks:** ffmpeg availability and codec edge cases remain operational dependencies.

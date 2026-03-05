@@ -16,9 +16,11 @@ Turn TwitchClipper into an automated highlight generator.
 
 ## Current state (today)
 
-- CLI pipeline downloads clips and compiles a montage
-- API exists but only `/health`
-- frontend is planned
+- Clip montage pipeline supports scrape -> filter -> rank -> duration-based selection -> montage
+- VOD highlights pipeline supports VOD download/import, chat fetch/import, spike detection, segment ranking, cutting, and montage
+- API supports job submission and status (`/jobs/clip-montage`, `/jobs/vod-highlights`, `/jobs`, `/jobs/{job_id}`, `/jobs/run-next`)
+- Optional SQLite persistence stores job states and outputs
+- Frontend is planned (next major phase)
 
 ## Phase 1: Ranking system for existing clips
 
@@ -34,6 +36,8 @@ Turn TwitchClipper into an automated highlight generator.
 - pick top N clips
 - tests for scoring rules
 
+**Status:** completed
+
 ## Phase 2: Job queue and worker
 
 **Why:**
@@ -47,6 +51,8 @@ Turn TwitchClipper into an automated highlight generator.
 - in memory queue
 - worker loop
 - job status output
+
+**Status:** completed
 
 ## Phase 3: VOD + Chat spike highlight generator
 
@@ -66,6 +72,8 @@ Turn TwitchClipper into an automated highlight generator.
 - compile montage
 - metadata output
 
+**Status:** completed
+
 ## Phase 4: Persistence
 
 **Why:**
@@ -77,3 +85,18 @@ Turn TwitchClipper into an automated highlight generator.
 
 - SQLite tables for jobs and outputs
 - store job status and final paths
+
+**Status:** completed (optional, env-gated at runtime)
+
+## Phase 5: Frontend app
+
+**Why:**
+
+- make job flows accessible without manual API/CLI usage
+- visualize job progress and produced artifacts
+
+**Deliverables (initial):**
+
+- submit `clip_montage` and `vod_highlights` jobs
+- poll and display `queued -> running -> done/failed` states
+- show key outputs (montage path, selected clips/segments metadata)

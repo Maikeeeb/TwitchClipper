@@ -50,15 +50,16 @@ TwitchClipper/ - Repository root
   `backend/segment_scoring.py` (segment scoring and stable ranking with optional keyword bonuses),
   `backend/vod_chat_pipeline.py` (orchestrates chat -> spikes -> merged/ranked segments),
   `backend/filtering.py` (clip dedupe and max-per-streamer filter),
-  `backend/pipeline.py` (scrape → filter → rank → top N → download; PER_STREAMER_K for multi-streamer)
+  `backend/pipeline.py` (scrape -> filter -> rank -> top N -> download; reuses cached sidecar+mp4 assets when available; PER_STREAMER_K for multi-streamer)
 - **Public API**: `Not implemented yet`
 - **CLI entrypoint**: `cli/main.py` (`vod-highlights` and `clip-montage` commands)
 
 ## API service (`api/`)
 
-- **FastAPI (job API)**: `api/app.py` — in-memory job queue, clip-montage submit, status, run-next dev helper.
-- **Run**: `uvicorn api.app:app --reload`
-- **Endpoints**: `GET /health` (ok check), `POST /jobs/clip-montage` (submit job), `GET /jobs/{job_id}` (status), `POST /jobs/run-next` (dev helper: process one queued job).
+- **FastAPI (job API)**: `api/app.py` — queue-backed job submission/status, clip montage and VOD highlight endpoints, run-next dev helper.
+- **Run**: `uvicorn api.main:app --reload` (or `uvicorn api.app:app --reload`)
+- **Endpoints**: `GET /health`, `POST /jobs/clip-montage`, `POST /jobs/vod-highlights`, `POST /jobs` (generic), `GET /jobs/{job_id}`, `POST /jobs/run-next`.
+- **Persistence**: optional SQLite repository (`TWITCHCLIPPER_DB_ENABLED=1`) persists jobs/outputs; otherwise status lives in memory.
 - CORS/auth/limits: `Not used`
 
 ## Frontend (`frontend/` planned)

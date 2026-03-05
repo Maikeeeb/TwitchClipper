@@ -1,6 +1,6 @@
 # Architecture Overview
 
-This document describes the current VOD highlight pipeline used by TwitchClipper.
+This document describes the current backend pipeline architecture used by TwitchClipper.
 
 ## System Flow
 
@@ -55,8 +55,8 @@ MontageCompiler --> OutputArtifacts
 
 ## Pipeline Steps
 
-1. Submit `vod_highlights` job through API or CLI.
-2. Queue stores the job in memory.
+1. Submit `vod_highlights` or `clip_montage` job through API or CLI.
+2. Queue stores the job in memory (with optional SQLite persistence for status/results).
 3. Worker pulls one queued job and executes the pipeline.
 4. Download VOD to local `vod.mp4`.
 5. Fetch replay chat to `chat.jsonl` (or use provided local chat file).
@@ -97,6 +97,7 @@ Sort order is deterministic:
 - `backend/job_queue.py` owns in-memory queue behavior.
 - `backend/worker.py` orchestrates job handlers and status updates.
 - `backend/db/` optionally persists jobs and outputs to SQLite when DB is enabled.
+- `backend/pipeline.py` owns clip montage scraping/filtering/ranking/download with cached-asset reuse.
 - `backend/vod_download.py`, `backend/vod_chat_fetch.py`, `backend/vod_chat_pipeline.py`,
   `backend/selection.py`, `backend/vod_cut.py`, and `backend/vod_montage.py` own the VOD pipeline stages.
 - `cli/` provides script entry points.
