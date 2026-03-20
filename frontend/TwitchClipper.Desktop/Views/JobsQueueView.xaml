@@ -1,0 +1,51 @@
+<UserControl x:Class="TwitchClipper.Desktop.Views.JobsQueueView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="SCR-004 Jobs Queue" FontSize="24" FontWeight="SemiBold" />
+
+        <DockPanel Grid.Row="1" Margin="0,10,0,10">
+            <TextBlock Text="Status" VerticalAlignment="Center" Margin="0,0,6,0" />
+            <ComboBox Width="120" SelectedValue="{Binding StatusFilter}" Margin="0,0,10,0">
+                <ComboBoxItem Content="all" />
+                <ComboBoxItem Content="queued" />
+                <ComboBoxItem Content="running" />
+                <ComboBoxItem Content="done" />
+                <ComboBoxItem Content="failed" />
+            </ComboBox>
+            <TextBlock Text="Search" VerticalAlignment="Center" Margin="0,0,6,0" />
+            <TextBox Width="220" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="SCR004-CMP003" />
+            <Button Content="Refresh now" Command="{Binding RefreshCommand}" Margin="10,0,0,0" AutomationProperties.Name="SCR004-CMP004" />
+            <Button Content="Run next" Command="{Binding RunNextCommand}" Margin="10,0,0,0" AutomationProperties.Name="SCR004-CMP005" />
+        </DockPanel>
+
+        <DataGrid Grid.Row="2"
+                  ItemsSource="{Binding Jobs}"
+                  SelectedItem="{Binding SelectedJob}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  MinHeight="280"
+                  AutomationProperties.Name="SCR004-CMP001">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="2*" />
+                <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="*" />
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*" />
+                <DataGridTextColumn Header="Progress" Binding="{Binding Progress}" Width="*" />
+                <DataGridTextColumn Header="Created" Binding="{Binding CreatedAt}" Width="2*" />
+                <DataGridTextColumn Header="Finished" Binding="{Binding FinishedAt}" Width="2*" />
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <StackPanel Grid.Row="3" Margin="0,12,0,0" Orientation="Horizontal">
+            <Button Content="Open selected" Command="{Binding OpenSelectedJobCommand}" Margin="0,0,10,0" />
+            <TextBlock Text="{Binding BannerError}" Foreground="DarkRed" TextWrapping="Wrap" />
+        </StackPanel>
+    </Grid>
+</UserControl>

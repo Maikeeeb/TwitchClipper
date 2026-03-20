@@ -87,6 +87,38 @@ def test_get_job_status_returns_fields(client: TestClient) -> None:
     assert "params" in data
 
 
+def test_list_jobs_returns_submitted_jobs(client: TestClient) -> None:
+    """Validation: GET /jobs lists queued jobs for queue/dashboard views."""
+    first = client.post("/jobs/clip-montage", json={"streamer_names": ["alpha"]})
+    second = client.post("/jobs/vod-highlights", json={"vod_url": "https://www.twitch.tv/videos/123"})
+    assert first.status_code == 200
+    assert second.status_code == 200
+
+    resp = client.get("/jobs")
+    assert resp.status_code == 200
+    payload = resp.json()
+    ids = {item["id"] for item in payload}
+    assert first.json()["job_id"] in ids
+    assert second.json()["job_id"] in ids
+
+
+def test_list_jobs_supports_status_filter(client: TestClient) -> None:
+    """Boundary: GET /jobs with status filter only returns matching status entries."""
+    queued = client.post("/jobs/clip-montage", json={"streamer_names": ["queued-job"]})
+    assert queued.status_code == 200
+    client.post("/jobs/run-next")
+
+    resp = client.get("/jobs?status=done")
+    assert resp.status_code == 200
+    assert all(item["status"] == "done" for item in resp.json())
+
+
+def test_list_jobs_rejects_invalid_status_filter(client: TestClient) -> None:
+    """Defect: invalid status filter values are rejected with 422."""
+    resp = client.get("/jobs?status=unknown")
+    assert resp.status_code == 422
+
+
 def test_get_job_unknown_404(client: TestClient) -> None:
     """Defect: GET /jobs/{job_id} for unknown id returns 404."""
     resp = client.get("/jobs/00000000-0000-0000-0000-000000000000")

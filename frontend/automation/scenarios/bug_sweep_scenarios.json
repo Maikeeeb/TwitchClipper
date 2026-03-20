@@ -1,0 +1,150 @@
+{
+  "version": "1.0.0",
+  "apiBaseUrlDefault": "http://127.0.0.1:8000",
+  "fixtures": {
+    "happyVodUrl": "https://www.twitch.tv/videos/2713566602",
+    "invalidUrls": {
+      "malformed": "not-a-url",
+      "nonVideoTwitch": "https://www.twitch.tv/somechannel",
+      "guardedUnreachable": "https://invalid.invalid/videos/2713566602",
+      "empty": ""
+    }
+  },
+  "heuristics": [
+    "state_drift",
+    "error_persistence",
+    "race_conditions",
+    "boundary_misuse",
+    "mode_gating"
+  ],
+  "scenarios": [
+    {
+      "id": "happy-startup-hydration",
+      "category": "happy",
+      "goal": "App startup shows online state and hydrates queue",
+      "preconditions": [
+        "API is running",
+        "Desktop app launches cleanly"
+      ],
+      "oracles": [
+        "Connection banner is empty",
+        "Dashboard health summary indicates API reachable"
+      ]
+    },
+    {
+      "id": "happy-vod-submit-fixed-url",
+      "category": "happy",
+      "goal": "Submit fixed happy-path VOD URL and navigate to queue/detail",
+      "input": {
+        "vod_url": "https://www.twitch.tv/videos/2713566602",
+        "output_dir": "vod_output"
+      },
+      "oracles": [
+        "Submit action succeeds and returns job id context",
+        "Current screen transitions to jobs queue"
+      ]
+    },
+    {
+      "id": "happy-clip-submit",
+      "category": "happy",
+      "goal": "Submit clip montage request",
+      "input": {
+        "streamer_names": [
+          "zubatlel"
+        ]
+      },
+      "oracles": [
+        "Submit action succeeds and returns job id context",
+        "Queue includes newly submitted clip job"
+      ]
+    },
+    {
+      "id": "failure-empty-vod-url",
+      "category": "failure",
+      "goal": "Verify client-side required-field validation",
+      "input": {
+        "vod_url": "",
+        "output_dir": "vod_output"
+      },
+      "strictOracle": {
+        "uiValidationMessageExact": "VOD URL is required.",
+        "canSubmit": false
+      }
+    },
+    {
+      "id": "failure-malformed-vod-url",
+      "category": "failure",
+      "goal": "Verify strict failed-job oracle for malformed URL",
+      "input": {
+        "vod_url": "not-a-url",
+        "output_dir": "vod_output"
+      },
+      "strictOracle": {
+        "jobFinalStatus": "failed",
+        "jobErrorExact": "Invalid input string: not-a-url"
+      }
+    },
+    {
+      "id": "failure-non-video-twitch-url",
+      "category": "failure",
+      "goal": "Verify strict failed-job oracle for non-video Twitch URL",
+      "input": {
+        "vod_url": "https://www.twitch.tv/somechannel",
+        "output_dir": "vod_output"
+      },
+      "strictOracle": {
+        "jobFinalStatus": "failed",
+        "jobErrorExact": "Invalid input string: https://www.twitch.tv/somechannel"
+      }
+    },
+    {
+      "id": "edge-guarded-unreachable-url",
+      "category": "edge",
+      "goal": "Verify deterministic guarded invalid-input failure",
+      "input": {
+        "vod_url": "https://invalid.invalid/videos/2713566602",
+        "output_dir": "vod_output"
+      },
+      "strictOracle": {
+        "jobFinalStatus": "failed",
+        "jobErrorExact": "Invalid input string: https://invalid.invalid/videos/2713566602"
+      }
+    },
+    {
+      "id": "failure-network-path-offline",
+      "category": "failure",
+      "goal": "Verify explicit offline submit guidance",
+      "preconditions": [
+        "API process is stopped before submit"
+      ],
+      "strictOracle": {
+        "formAlertExact": "Network error while submitting VOD job."
+      }
+    },
+    {
+      "id": "edge-job-detail-404",
+      "category": "edge",
+      "goal": "Load stale/missing job id in detail view",
+      "input": {
+        "job_id": "missing-id"
+      },
+      "oracles": [
+        "Error message contains 'Job not found'"
+      ]
+    },
+    {
+      "id": "edge-rerun-sparse-prefill",
+      "category": "edge",
+      "goal": "Rerun action on sparse legacy params does not crash",
+      "input": {
+        "job": {
+          "type": "vod_highlights",
+          "params": {}
+        }
+      },
+      "oracles": [
+        "Screen remains valid and command does not throw"
+      ]
+    }
+  ]
+}

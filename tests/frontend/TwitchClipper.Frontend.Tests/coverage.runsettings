@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat Code Coverage">
+        <Configuration>
+          <Format>cobertura</Format>
+          <ExcludeByFile>**/*.g.cs,**/*.g.i.cs,**/*.xaml,**/*View.xaml.cs,**/App.xaml.cs,**/MainWindow.xaml.cs</ExcludeByFile>
+          <Exclude>[xunit.*]*,[TwitchClipper.Frontend.Tests]*</Exclude>
+          <ExcludeByAttribute>GeneratedCodeAttribute,CompilerGeneratedAttribute,ExcludeFromCodeCoverageAttribute</ExcludeByAttribute>
+          <IncludeDirectory>../../frontend/TwitchClipper.Desktop</IncludeDirectory>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

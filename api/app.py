@@ -11,7 +11,7 @@ import os
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from pydantic import BaseModel, Field, field_validator
 
 from backend.config import (
@@ -23,6 +23,7 @@ from backend.config import (
     env_bool,
 )
 from backend.db.repo import SQLiteJobRepository
+from backend.jobs import JobStatus
 from backend.job_queue import InMemoryJobQueue
 from backend.models.jobs import Job
 from backend.worker import Worker, default_handlers
@@ -126,6 +127,52 @@ def get_job_repo(request: Request) -> Optional[SQLiteJobRepository]:
     return request.app.state.job_repo
 
 
+def _parse_optional_status(status: Optional[str]) -> Optional[JobStatus]:
+    if status is None:
+        return None
+    try:
+        return JobStatus(status)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="Invalid status filter") from exc
+
+
+def _list_jobs_from_repo(
+    *,
+    job_repo: SQLiteJobRepository,
+    status: Optional[JobStatus],
+    search: Optional[str],
+    limit: int,
+) -> list[JobResponse]:
+    query = "SELECT id FROM jobs"
+    filters: list[str] = []
+    params: list[Any] = []
+
+    if status is not None:
+        filters.append("status = ?")
+        params.append(status.value)
+
+    if search:
+        filters.append("id LIKE ?")
+        params.append(f"%{search}%")
+
+    if filters:
+        query += " WHERE " + " AND ".join(filters)
+
+    query += " ORDER BY created_at DESC LIMIT ?"
+    params.append(limit)
+
+    rows = job_repo.connection.execute(query, params).fetchall()
+    payload: list[JobResponse] = []
+    for row in rows:
+        job = job_repo.get_job(row["id"])
+        if job is None:
+            continue
+        outputs = job_repo.get_job_outputs(row["id"])
+        payload.append(JobResponse.from_job(job, outputs=outputs))
+
+    return payload
+
+
 def _build_optional_job_repo(
     *,
     job_repo: Optional[SQLiteJobRepository],
@@ -216,7 +263,31 @@ def create_app(
         queue.enqueue(job)
         return {"job_id": job.id}
 
-    # Future: GET /jobs to list jobs (e.g. with optional status filter).
+    @app.get("/jobs", response_model=list[JobResponse])
+    def list_jobs(
+        status: Optional[str] = Query(None, description="Optional status filter"),
+        search: Optional[str] = Query(None, description="Optional id search"),
+        limit: int = Query(100, ge=1, le=500),
+        queue: InMemoryJobQueue = Depends(get_queue),
+        job_repo: Optional[SQLiteJobRepository] = Depends(get_job_repo),
+    ) -> list[JobResponse]:
+        parsed_status = _parse_optional_status(status)
+
+        if job_repo is not None:
+            return _list_jobs_from_repo(
+                job_repo=job_repo,
+                status=parsed_status,
+                search=search,
+                limit=limit,
+            )
+
+        jobs = queue.list_jobs(status=parsed_status)
+        if search:
+            jobs = [job for job in jobs if search.lower() in job.id.lower()]
+
+        jobs.sort(key=lambda job: job.created_at, reverse=True)
+        return [JobResponse.from_job(job) for job in jobs[:limit]]
+
     @app.get("/jobs/{job_id}", response_model=JobResponse)
     def get_job(
         job_id: str,

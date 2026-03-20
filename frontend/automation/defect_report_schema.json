@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://twitchclipper.local/schemas/frontend-defect-report.schema.json",
+  "title": "FrontendDesktopDefectReport",
+  "type": "object",
+  "required": [
+    "run_id",
+    "generated_at",
+    "tool",
+    "defects"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "tool": {
+      "type": "string",
+      "minLength": 1
+    },
+    "defects": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/defect"
+      }
+    }
+  },
+  "$defs": {
+    "defect": {
+      "type": "object",
+      "required": [
+        "id",
+        "scenario",
+        "severity",
+        "preconditions",
+        "steps",
+        "expected",
+        "actual",
+        "artifacts",
+        "suspected_area"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scenario": {
+          "type": "string",
+          "minLength": 1
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "S1",
+            "S2",
+            "S3",
+            "S4"
+          ]
+        },
+        "preconditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "expected": {
+          "type": "string",
+          "minLength": 1
+        },
+        "actual": {
+          "type": "string",
+          "minLength": 1
+        },
+        "artifacts": {
+          "type": "object",
+          "required": [
+            "screenshots",
+            "logs"
+          ],
+          "properties": {
+            "screenshots": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "logs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "api_snapshots": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "suspected_area": {
+          "type": "string",
+          "minLength": 1
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

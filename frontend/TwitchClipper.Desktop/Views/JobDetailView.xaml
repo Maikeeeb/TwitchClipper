@@ -1,0 +1,54 @@
+<UserControl x:Class="TwitchClipper.Desktop.Views.JobDetailView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="clr-namespace:TwitchClipper.Desktop.Models">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Text="SCR-005 Job Detail" FontSize="24" FontWeight="SemiBold" Margin="0,0,10,0" />
+            <TextBlock Text="Status:" VerticalAlignment="Bottom" />
+            <TextBlock Text="{Binding Job.Status}" Margin="6,0,0,0" VerticalAlignment="Bottom" />
+        </StackPanel>
+
+        <TabControl Grid.Row="1" SelectedIndex="{Binding SelectedTab}">
+            <TabItem Header="Summary">
+                <StackPanel Margin="8">
+                    <TextBlock Text="Job ID:" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding Job.Id}" Margin="0,0,0,8" />
+                    <TextBlock Text="Type:" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding Job.Type}" Margin="0,0,0,8" />
+                    <TextBlock Text="Progress:" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding Job.Progress}" />
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="Parameters">
+                <ScrollViewer>
+                    <ItemsControl ItemsSource="{Binding Job.Params}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Outputs">
+                <ItemsControl ItemsSource="{Binding OutputRows}" />
+            </TabItem>
+            <TabItem Header="Error">
+                <TextBox Text="{Binding ErrorMessage}" IsReadOnly="True" TextWrapping="Wrap" AcceptsReturn="True" />
+            </TabItem>
+        </TabControl>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,12,0,0">
+            <Button Content="Open output path" Command="{Binding OpenOutputPathCommand}" Margin="0,0,8,0" AutomationProperties.Name="SCR005-CMP005" />
+            <Button Content="Rerun with these parameters" Command="{Binding RerunWithPrefillCommand}" Margin="0,0,8,0" AutomationProperties.Name="SCR005-CMP006" />
+            <Button Content="Back to jobs" Command="{Binding BackToQueueCommand}" AutomationProperties.Name="SCR005-CMP007" />
+        </StackPanel>
+    </Grid>
+</UserControl>
