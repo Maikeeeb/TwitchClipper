@@ -54,6 +54,7 @@ logs/
 currentVideos/
 fullVideos/
 manual_test_output/
+vod_output/
 *.mp4
 # Test media (committed for offline tests)
 !tests/media/
@@ -68,6 +69,11 @@ streamer links
 *.temp
 *.bak
 *.backup
+
+# .NET build artifacts
+**/bin/
+**/obj/
+**/TestResults/
 
 # Environment files
 .env
