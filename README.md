@@ -208,6 +208,12 @@ $env:TWITCHCLIPPER_DB_PATH="./data/twitchclipper.sqlite3"
 pytest tests/ --cov=backend --cov-report=term-missing
 ```
 
+Desktop/API unattended bug sweep preflight:
+
+```bash
+python scripts/frontend_bug_sweep.py
+```
+
 Integration tests that hit twitch.tv are skipped by default. To enable (PowerShell):
 
 ```bash
@@ -239,6 +245,7 @@ Primary hub: `docs/repo_overview.md`
 - `docs/TODO.md` - prioritized tasks
 - `docs/DEPLOYMENT.md` - deployment notes
 - `docs/DEPLOYMENT_QUICKSTART.md` - deployment quickstart
+- `docs/frontend_bug_sweep.md` - unattended desktop bug sweep runbook
 
 ## Project Guidance
 

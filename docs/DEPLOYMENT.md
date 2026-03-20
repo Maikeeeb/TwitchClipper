@@ -26,7 +26,7 @@ Describe the unified approach (single service, same runtime).
 
 ## Option 2: Separate deployments
 
-Describe independent frontend/backend deployments.
+Describe independent desktop UI/backend deployments.
 
 ### Backend
 
@@ -35,11 +35,11 @@ Describe independent frontend/backend deployments.
 - Hosting options: `Not used`
 - Required environment variables: `Not used`
 
-### Frontend
+### Desktop UI
 
-- Build steps: `Not implemented yet (npm run build)`
+- Build steps: `Not implemented yet (planned C# desktop build command)`
 - Publish directory: `Not used`
-- Hosting options: `Not used`
+- Distribution options: `Not used`
 - Required environment variables: `Not used`
 
 ---
@@ -60,7 +60,7 @@ Document containerization strategy if used.
 
 `Not used`
 
-### Frontend
+### Desktop UI
 
 `Not used`
 

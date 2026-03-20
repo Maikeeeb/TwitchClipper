@@ -18,7 +18,7 @@ your real commands and provider.
 4. Verify health check:
    - `Not used`
 
-## Option B: Separate frontend + backend
+## Option B: Separate desktop UI + backend
 
 ### Backend
 
@@ -33,11 +33,11 @@ your real commands and provider.
 3. Configure environment variables:
    - `Not used`
 
-### Frontend
+### Desktop UI
 
 1. Build:
    ```bash
-   Not implemented yet (npm run build)
+   Not implemented yet (planned C# desktop build command)
    ```
 2. Publish directory: `Not used`
 3. Configure environment variables:

@@ -45,11 +45,11 @@ Common placeholders you must resolve:
 
 - `TwitchClipper` <project display name>
 - `Python` <e.g., Python, TypeScript>
-- `None (uses Selenium + MoviePy)` <e.g., FastAPI, React, None>
-- `CLI: python cli/main.py; API: uvicorn api.main:app --reload; UI: Not implemented yet (npm run dev)` <CLI/API/UI entry commands>
+- `None (uses Selenium + MoviePy)` <e.g., FastAPI, C# desktop, None>
+- `CLI: python cli/main.py; API: uvicorn api.main:app --reload; UI: Not implemented yet (planned C# desktop app)` <CLI/API/UI entry commands>
 - `python cli/main.py` <CLI entry command or module path>
 - `uvicorn api.main:app --reload` <API start command>
-- `Not implemented yet (npm run dev)` <frontend dev server command>
+- `Not implemented yet (planned C# desktop launch command)` <desktop UI launch command>
 - `Not used` <tutorial or examples command>
 - `Not used` <config file paths>
 - `Not used` <config helper module paths>
@@ -65,10 +65,10 @@ Common placeholders you must resolve:
 - `uvicorn api.main:app --reload` <API entry modules/commands>
 - `/health` <route list or router modules>
 - `Not used` <CORS/auth/limits references>
-- `frontend/` (planned) <frontend root folder>
-- `Not implemented yet` <frontend app entry file>
+- `desktop-ui/` (planned) <desktop UI root folder>
+- `Not implemented yet` <desktop UI app entry file>
 - `Not used` <shared types/utils paths>
-- `Not used` <frontend test folder>
+- `Not used` <desktop UI test folder>
 - `Not used` <test utils paths>
 - `Not used` <test command(s)>
 - `Not used` <MCP demo test paths>
@@ -111,15 +111,15 @@ Common placeholders you must resolve:
 - `uvicorn api.main:app --reload` <backend start command>
 - `Not used` <backend hosting providers>
 - `Not used` <backend env var names>
-- `Not implemented yet (npm run build)` <frontend build commands>
-- `Not used` <frontend output dir>
-- `Not used` <frontend hosting providers>
-- `Not used` <frontend env var names>
+- `Not implemented yet (planned C# desktop build command)` <desktop UI build commands>
+- `Not used` <desktop UI output dir>
+- `Not used` <desktop UI distribution channels>
+- `Not used` <desktop UI env var names>
 - `Not used` <base image name>
 - `Not used` <docker build command>
 - `Not used` <docker run command>
 - `Not used` <backend env vars with descriptions>
-- `Not used` <frontend env vars with descriptions>
+- `Not used` <desktop UI env vars with descriptions>
 - `Not used` <env vars for unified deploy>
 - `Not used` <healthcheck URL>
 - `Not used` <production URL>
@@ -134,25 +134,25 @@ Use one of these variants to prune the template quickly.
 ### Backend-only
 
 - Keep: `agents/backend-solver-agent.md`, backend tests, backend CI job
-- Remove or mark Not used: frontend sections in README/AGENTS, frontend CI job
-- Update: `docs/repo_overview.md` to remove frontend pointers
+- Remove or mark Not used: desktop UI sections in README/AGENTS, desktop UI CI job
+- Update: `docs/repo_overview.md` to remove desktop UI pointers
 
-### Frontend-only
+### Desktop UI-only
 
-- Keep: `agents/frontend-ui-agent.md`, frontend tests, frontend CI job
+- Keep: `agents/frontend-ui-agent.md`, desktop UI tests, desktop UI CI job
 - Remove or mark Not used: backend/API sections in README/AGENTS, backend CI job
 - Update: `docs/repo_overview.md` to remove backend/API pointers
 
 ### Full-stack
 
-- Keep: both backend and frontend sections, both CI jobs
+- Keep: both backend and desktop UI sections, both CI jobs
 - Update: repo overview with both sides and shared boundaries
 
 ## 3) Update agent guidance
 
 - Adjust @agents/backend-solver-agent.md to reflect your real backend/domain
   responsibilities and constraints.
-- Remove any irrelevant sections from @AGENTS.md (for example, frontend or API
+- Remove any irrelevant sections from @AGENTS.md (for example, desktop UI or API
   guidance if the project is backend-only).
 - Update placeholders in:
   - @agents/planner-agent.md
@@ -173,7 +173,7 @@ Use one of these variants to prune the template quickly.
 
 ## 5) Establish repo structure
 
-- Create or rename top-level folders (e.g., `src/`, `backend/`, `frontend/`).
+- Create or rename top-level folders (e.g., `src/`, `backend/`, `desktop-ui/`).
 - Ensure @docs/repo_overview.md reflects the final structure.
 - Add a minimal example module or entry point if the project is greenfield.
 
