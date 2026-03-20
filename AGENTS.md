@@ -435,6 +435,7 @@ Update files in `docs/` when changes affect **technical implementation details**
 
 - Testing must cover both validation (meets requirements) and defect discovery (break it safely).
 - Coverage is required but does not replace thoughtful test design.
+- Test results do not replace comprehension. A passing suite proves observed behavior under tested conditions, not full understanding of the implementation.
 - Do not disable tests to meet test or coverage requirements.
 - Prefer unit tests first; add integration/system tests only for major flows and interface boundaries.
 
@@ -609,9 +610,61 @@ For domain-specific anti-patterns, see [Backend Solver Agent](agents/backend-sol
 
 - Any change that alters solver behavior must be documented
 - If behavior changes, tests must change first or alongside code
-- If a change touches production code OR tests, the final response must include "Feature Summary"
-  (always) and "Test Change Report" (if tests changed).
+- If a change touches production code OR tests, the final response must include:
+  - "Feature Summary" (always)
+  - "Comprehension Check" (always for production code changes)
+  - "Test Change Report" (if tests changed)
 - Refactors must not change outputs unless explicitly requested
+- The agent must be able to explain the intent, mechanism, and tradeoffs of the final change, not
+  just list modified files
+
+## Generation Then Comprehension (Required)
+
+Generation is allowed to create the first draft, but completion requires a comprehension pass that
+proves the agent understands the solution, its tradeoffs, and its failure modes.
+
+### Why this exists
+
+- Task completion is not the same as skill formation
+- Passing tests do not prove architectural understanding
+- Delegation-only behavior increases risk of shallow understanding and weak debugging later
+- The repo standard is: generate first, then earn understanding
+
+### Required workflow
+
+For feature, refactor, and bug-fix work (anything beyond trivial docs-only changes), follow this
+sequence:
+
+1. Generate a draft implementation
+2. Verify behavior (tests/lints/manual checks as appropriate)
+3. Run a comprehension pass before declaring completion
+4. Explain control flow and data flow in plain language
+5. Explain design choices and tradeoffs versus at least one plausible alternative
+6. Explain failure modes, assumptions, and how the change should be extended safely later
+
+### Minimum comprehension checks
+
+Before finishing, the agent must be able to answer:
+
+- What happens end-to-end in the happy path?
+- Where are the key state transitions and side effects?
+- What assumptions does this code depend on (inputs, ordering, environment, contracts)?
+- What are the likely failure modes and their current handling?
+- What is the first place to modify for a follow-up requirement?
+- What test would fail first if this behavior regresses?
+
+### Bad vs Good Comprehension
+
+Bad:
+- "Used a service class"
+- "Added validation"
+- "Tests pass"
+
+Good:
+- "Used a service class so route handlers stay thin and API calls can be mocked in tests"
+- "Added validation at the boundary so invalid input fails before job creation"
+- "Tests confirm happy-path and invalid-input behavior, but concurrency behavior still needs
+  deeper coverage"
 
 ## When in Doubt
 
@@ -694,6 +747,14 @@ All feature or test changes must end with:
 - What was implemented
 - Key design decisions  
 - Links to relevant files changed
+
+**Comprehension Check** (always for production code changes)
+- How the implementation works step by step (control flow + data flow)
+- Why this design was chosen over at least one alternative
+- Main assumptions the implementation depends on
+- Fragile areas, edge cases, or likely failure points
+- How this would be extended, replaced, or refactored later
+- What part of the change is most likely wrong or incomplete
 
 **Test Change Report** (if tests changed)
 - What test file(s) were added/changed
